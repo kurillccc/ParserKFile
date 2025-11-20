@@ -100,12 +100,6 @@ def find_elements_for_layer(
 
         layer_elements[rounded_coord] = elements_in_layer
 
-    # Проверка на одинаковое количество элементов в каждом слое
-    # element_counts = [len(elements) for elements in layer_elements.values() if elements]  # исключили пустые слои
-
-    # if len(set(element_counts)) > 1:
-    #     raise ValueError("Ошибка: количество элементов в слоях не совпадает!")
-
     # Удаление последнего слоя, если он пустой
     if layer_elements and not layer_elements[list(layer_elements.keys())[-1]]:
         del layer_elements[list(layer_elements.keys())[-1]]
