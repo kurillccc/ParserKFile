@@ -95,4 +95,4 @@ pip install -r requirements.txt
 4. Запускаем приложение с графическим интерфейсом (python run.py) или (python app/cli.py --input путь/к/файлу.k) для работы через консоль (там можно посмотреть что и как считается)
 
 ## 📜 Ссылки
-[Блок схема (Figma)]([https://www.figma.com/board/gIJYAthQxse664SILdxwls/Блок-схема-ParserKFile?node-id=0-1&p=f&t=8F2Tcnusib4UcTgX-0])
+[Блок схема (Figma)](https://www.figma.com/board/gIJYAthQxse664SILdxwls/Блок-схема-ParserKFile?node-id=0-1&p=f&t=8F2Tcnusib4UcTgX-0)
