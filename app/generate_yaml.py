@@ -182,11 +182,7 @@ def write_to_cd_by_k_word(data: Dict[str, Any], section_name: str, file_path_cd:
 
         base_name = os.path.splitext(os.path.basename(file_path_cd))[0]
 
-        # Проверка, чтобы не добавить _output второй раз
-        if not base_name.endswith("_output"):
-            output_name = f"{base_name}_output.cd"
-        else:
-            output_name = f"{base_name}.cd"
+        output_name = f"{base_name}.cd"
 
         output_file_path: str = os.path.join(desktop_path, output_name)
 
@@ -195,11 +191,7 @@ def write_to_cd_by_k_word(data: Dict[str, Any], section_name: str, file_path_cd:
 
         return output_file_path
     else:
-        if not "_output" in os.path.splitext(os.path.basename(file_path_cd))[0]:
-            output_file_path: str = os.path.join(BASE_DIR, "data", "output",
-                                                 f"{os.path.splitext(os.path.basename(file_path_cd))[0]}_output.cd")
-        else:
-            output_file_path: str = os.path.join(BASE_DIR, "data", "output",
+        output_file_path: str = os.path.join(BASE_DIR, "data", "output",
                                                  f"{os.path.splitext(os.path.basename(file_path_cd))[0]}.cd")
         with open(output_file_path, "w", encoding="utf-8") as file:
             file.writelines(output_lines)
