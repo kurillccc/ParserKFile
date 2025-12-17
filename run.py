@@ -162,8 +162,7 @@ class Application(tk.Tk):
             if len(set(element_counts)) > 1:
                 messagebox.showerror("Предупреждение", "Количество элементов в слоях не совпадает!")
 
-            data: Dict[str, Any] = generate_layer_data(len(layer_elements), coordinate, density, PR, h, nodes,
-                                                       filtered_elements)
+            data: Dict[str, Any] = generate_layer_data(len(layer_elements), coordinate, density, PR, h, layer_elements)
         except Exception as e:
             messagebox.showerror("Ошибка", f"Произошла ошибка при обработке результатов: {e}")
             return

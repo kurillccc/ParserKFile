@@ -25,15 +25,12 @@ def generate_layer_data(
         density: float,
         PR: float,
         h: float,
-        nodes: Dict[int, List[float]],
-        filtered_elements: Dict[int, List[int]]
+        layer_elements: Dict[float, List[int]]
 ) -> Dict[str, Any]:
 
     cell_sets = []
     initial_stress_set = []
     set_solid = []
-
-    layer_elements = find_elements_for_layer(nodes, filtered_elements, coordinate)
 
     g = 9.8
     h_div = h / num_layers
