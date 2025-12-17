@@ -18,6 +18,28 @@ MESH_PARTS:
     uid: 73bab7fe1a2ab9d0
     parentUid: ''
     __excludeRun__: ~
+CELL_SETS:
+  - Id: 1
+    Name: set1
+    Count: 9
+    _ref_used_: 1
+    uid: ddb9ed2a26f648a4b0d00cf1180b759a
+    parentUid: ''
+    __excludeRun__: '~'
+  - Id: 2
+    Name: set2
+    Count: 9
+    _ref_used_: 1
+    uid: d63d380b8c394723888e944dae013861
+    parentUid: ''
+    __excludeRun__: '~'
+  - Id: 3
+    Name: set3
+    Count: 9
+    _ref_used_: 1
+    uid: 0a9cc911b59749d7a9ce7c9b7b87b262
+    parentUid: ''
+    __excludeRun__: '~'
 DATABASE_EXTENT_BINARY:
   - NEIPH: 0
     NEIPS: 0

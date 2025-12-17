@@ -2,7 +2,7 @@ import os
 from typing import List
 
 # Навзвание входных файлов
-input_file_name: str = "big_test_bez_poley"
+input_file_name: str = "test0"
 # Название выходных файлов
 output_file_name: str = "output"
 

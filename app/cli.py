@@ -81,8 +81,7 @@ def run(input: str, subregion: int, coordinate: str, density: float, pr: float, 
 
     print("Переведем файл в требуемый формат")
     try:
-        data: Dict[str, Any] = generate_layer_data(len(layer_elements), coordinate, density, pr, h, nodes,
-                                                   filtered_elements)
+        data: Dict[str, Any] = generate_layer_data(len(layer_elements), coordinate, density, pr, h, layer_elements)
 
         write_to_yaml(data, input, output)
         print(f"Файл сохранен в {output}")
