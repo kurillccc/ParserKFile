@@ -19,44 +19,52 @@ def generate_unique_id() -> str:
     return uuid.uuid4().hex
 
 
-def generate_layer_data(num_layers: int, coordinate: str, density: float, PR: float, h: float,
-                        nodes: Dict[int, List[float]], filtered_elements: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Генерация данных для всех слоев с учетом выбранной координаты."""
-    cell_sets: List[Dict[str, Any]] = []
-    initial_stress_set: List[Dict[str, Any]] = []
-    set_solid: List[Dict[str, Any]] = []
+def generate_layer_data(
+        num_layers: int,
+        coordinate: str,
+        density: float,
+        PR: float,
+        h: float,
+        nodes: Dict[int, List[float]],
+        filtered_elements: Dict[int, List[int]]
+) -> Dict[str, Any]:
 
-    layer_elements: Dict[float, List[int]] = find_elements_for_layer(nodes, filtered_elements, coordinate)
+    cell_sets = []
+    initial_stress_set = []
+    set_solid = []
 
-    for i, (coord_value, elements_in_layer) in enumerate(layer_elements.items()):
-        layer_id: int = i + 1
-        unic_id: str = generate_unique_id()
-        new_unic_id: str = generate_unique_id()
+    layer_elements = find_elements_for_layer(nodes, filtered_elements, coordinate)
 
-        # Вычисление высоты слоя (h_for_layer)
-        h_for_layer: float = h / num_layers * (len(layer_elements.items()) - layer_id) + h / (2 * num_layers)
+    g = 9.8
+    h_div = h / num_layers
+    layers_count = len(layer_elements)
 
-        sig_main: float = density * 9.8 * h_for_layer
-        sig: float = density * 9.8 * h_for_layer * PR / (1 - PR)
+    # --- заранее выбираем ось ---
+    if coordinate == 'X':
+        stress_idx = 0
+    elif coordinate == 'Y':
+        stress_idx = 1
+    elif coordinate == 'Z':
+        stress_idx = 2
+    else:
+        raise ValueError("Некорректная координата")
 
-        # Определяем значения SIG в зависимости от выбранной координаты
-        if coordinate == 'X':
-            sigxx: float = sig_main
-            sigyy: float = sig
-            sigzz: float = sig
-        elif coordinate == 'Y':
-            sigxx: float = sig
-            sigyy: float = sig_main
-            sigzz: float = sig
-        elif coordinate == 'Z':
-            sigxx: float = sig
-            sigyy: float = sig
-            sigzz: float = sig_main
+    for i, (coord_value, elements_in_layer) in enumerate(layer_elements.items(), start=1):
+        unic_id = uuid.uuid4().hex
+        new_unic_id = uuid.uuid4().hex
 
-        # Заполнение данных для CELL_SETS
+        h_for_layer = h_div * (layers_count - i) + h_div * 0.5
+
+        sig_main = density * g * h_for_layer
+        sig = sig_main * PR / (1 - PR)
+
+        sigs = [sig, sig, sig]
+        sigs[stress_idx] = sig_main
+        sigxx, sigyy, sigzz = sigs
+
         cell_sets.append({
-            'Id': layer_id,
-            'Name': f'set{layer_id}',
+            'Id': i,
+            'Name': f'set{i}',
             'Count': len(elements_in_layer),
             '_ref_used_': 1,
             'uid': unic_id,
@@ -64,9 +72,8 @@ def generate_layer_data(num_layers: int, coordinate: str, density: float, PR: fl
             '__excludeRun__': '~'
         })
 
-        # Заполнение данных для INITIAL_STRESS_SET
         initial_stress_set.append({
-            'ESID': layer_id,
+            'ESID': i,
             'SIGXX': sigxx,
             'SIGYY': sigyy,
             'SIGZZ': sigzz,
@@ -74,17 +81,16 @@ def generate_layer_data(num_layers: int, coordinate: str, density: float, PR: fl
             'SIGYZ': 0,
             'SIGZX': 0,
             'EPS': 0,
-            'name': f'set{layer_id}',
+            'name': f'set{i}',
             'uid': new_unic_id,
             'parentUid': '',
             '__excludeRun__': '~'
         })
 
-        # Заполнение данных для SET_SOLID
         set_solid.append({
-            'NAME': f'set{layer_id}',
-            'SID': layer_id,
-            'ELEMENTS': elements_in_layer  # Список элементов для этого слоя
+            'NAME': f'set{i}',
+            'SID': i,
+            'ELEMENTS': elements_in_layer
         })
 
     return {
@@ -92,6 +98,7 @@ def generate_layer_data(num_layers: int, coordinate: str, density: float, PR: fl
         'INITIAL_STRESS_SET': initial_stress_set,
         'SET_SOLID': set_solid
     }
+
 
 
 def get_output_dir():
@@ -131,68 +138,84 @@ def write_to_yaml(data: Dict[str, Any], file_path: str, output_path: str) -> str
     return directory
 
 
-def write_to_cd_by_k_word(data: Dict[str, Any], section_name: str, file_path_cd: str,
-                          key_words: List[str]) -> str:
-    if not ".cd" in file_path_cd:
-        if not "output" in file_path_cd:
-            file_path_cd += "/" + input_file_name + ".cd"
+import tempfile
+
+
+def write_to_cd_by_k_word(
+        data: Dict[str, Any],
+        section_name: str,
+        file_path_cd: str,
+        key_words: List[str]
+) -> str:
+
+    # --- нормализуем путь ---
+    if not file_path_cd.endswith(".cd"):
+        if "output" not in file_path_cd:
+            file_path_cd = os.path.join(file_path_cd, f"{input_file_name}.cd")
         else:
-            file_path_cd: str = os.path.join(BASE_DIR, "data", "output", f"{output_file_name}.cd")
-    file_path_txt: str = file_path_cd + ".txt"
-    os.rename(file_path_cd, file_path_txt)
-    output_lines = []
-    last_line: bool = False
+            file_path_cd = os.path.join(BASE_DIR, "data", "output", f"{output_file_name}.cd")
+
+    insert_block = yaml.dump(
+        {section_name: data[section_name]},
+        Dumper=CustomDumper,
+        default_flow_style=False,
+        allow_unicode=True,
+        sort_keys=False,
+        indent=2
+    )
+
+    found_key_word = False
+    inserting_done = False
+
+    # --- временный файл рядом ---
+    tmp_fd, tmp_path = tempfile.mkstemp(suffix=".cd", dir=os.path.dirname(file_path_cd))
+    os.close(tmp_fd)
+
     try:
-        with open(file_path_txt, "r", encoding="utf-8", errors='ignore') as file:
-            lines = file.readlines()
+        with open(file_path_cd, "r", encoding="utf-8", errors="ignore") as src, \
+             open(tmp_path, "w", encoding="utf-8") as dst:
 
-        inserting: bool = False  # Флаг, показывающий, когда нужно вставлять данные
-        found_key_word: bool = False  # Флаг, показывающий, что нашли строку "1"
+            for line in src:
+                stripped = line.strip()
 
-        for i, line in enumerate(lines):
-            if found_key_word and not inserting:
-                if line.startswith((" ", "\t")) and i != len(lines) - 1:
-                    output_lines.append(line)
-                    continue  # Пропускаем строки с пробелами
-                else:
-                    if i == len(lines) - 1:
-                        output_lines.append(line)
-                        last_line = True
-                    # Нашли следующую секцию, вставляем данные перед ней
-                    output_lines.append(
-                        yaml.dump({section_name: data[section_name]}, Dumper=CustomDumper, default_flow_style=False,
-                                  allow_unicode=True, sort_keys=False,
-                                  indent=2))
-                    inserting = True  # Устанавливаем флаг, чтобы вставка произошла только один раз
+                if found_key_word and not inserting_done:
+                    if not line.startswith((" ", "\t")):
+                        dst.write(insert_block)
+                        inserting_done = True
 
-            if line.strip() in key_words:
-                found_key_word = True
+                if stripped in key_words:
+                    found_key_word = True
 
-            if not last_line: output_lines.append(line)
+                dst.write(line)
+
+            # если ключ был, но вставки так и не случилось (ключ в конце файла)
+            if found_key_word and not inserting_done:
+                dst.write("\n")
+                dst.write(insert_block)
+
+        # атомарная замена
+        os.replace(tmp_path, file_path_cd)
+
     except Exception as e:
-        print(f"Не удалось вставить данные в cd файл\nОшибка{e}")
-    finally:
-        # Возвращаем обратно в .cd
-        os.rename(file_path_txt, file_path_cd)
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise RuntimeError(f"Не удалось вставить данные в cd файл: {e}")
 
+    # --- путь вывода ---
     if getattr(sys, 'frozen', False):
-        # Если приложение собрано в .exe или .app через PyInstaller
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop", "output")
         os.makedirs(desktop_path, exist_ok=True)
-
-        base_name = os.path.splitext(os.path.basename(file_path_cd))[0]
-
-        output_name = f"{base_name}.cd"
-
-        output_file_path: str = os.path.join(desktop_path, output_name)
-
-        with open(output_file_path, "w", encoding="utf-8") as file:
-            file.writelines(output_lines)
-
-        return output_file_path
+        output_file_path = os.path.join(desktop_path, os.path.basename(file_path_cd))
     else:
-        output_file_path: str = os.path.join(BASE_DIR, "data", "output",
-                                                 f"{os.path.splitext(os.path.basename(file_path_cd))[0]}.cd")
-        with open(output_file_path, "w", encoding="utf-8") as file:
-            file.writelines(output_lines)
-            return output_file_path
+        output_dir = os.path.join(BASE_DIR, "data", "output")
+        os.makedirs(output_dir, exist_ok=True)
+        output_file_path = os.path.join(output_dir, os.path.basename(file_path_cd))
+
+    # если надо копировать результат отдельно
+    if output_file_path != file_path_cd:
+        with open(file_path_cd, "r", encoding="utf-8") as src, \
+             open(output_file_path, "w", encoding="utf-8") as dst:
+            dst.writelines(src)
+
+    return output_file_path
+
