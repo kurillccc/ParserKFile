@@ -96,3 +96,6 @@ pip install -r requirements.txt
 
 ## 📜 Ссылки
 [Блок схема (Figma)](https://www.figma.com/board/gIJYAthQxse664SILdxwls/Блок-схема-ParserKFile?node-id=0-1&p=f&t=8F2Tcnusib4UcTgX-0)
+
+[Техническая документация.pdf](https://github.com/Kurillccc/ParserKFile/raw/main/docs/Техническая%20документация.pdf)
+
