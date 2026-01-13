@@ -158,7 +158,7 @@ class Application(tk.Tk):
         self.total_elapsed_time = self.format_elapsed_time(elapsed)
         self.time_label.config(text=f"Прошло: {self.total_elapsed_time}")
 
-        self.after(1000, self.update_timer)
+        self.after(10, self.update_timer)
 
     def format_elapsed_time(self, seconds: float) -> str:
         if seconds < 1:
