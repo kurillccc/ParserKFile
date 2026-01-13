@@ -2,8 +2,7 @@ import os
 import threading
 import time
 import tkinter as tk
-from tkinter import filedialog, messagebox
-from tkinter import ttk
+from tkinter import filedialog, messagebox, ttk, scrolledtext
 from typing import Dict, Any
 
 from app.generate_yaml import generate_layer_data, write_to_yaml, write_to_cd_by_k_word
@@ -142,9 +141,19 @@ class Application(tk.Tk):
         self.time_label = tk.Label(self.status_frame, text="", anchor="e")
         self.time_label.pack(side="right")
 
-        # Текстовое поле для отображения результатов
-        self.output_text = tk.Text(self, height=20, width=84)
-        self.output_text.grid(row=9, column=0, columnspan=2, pady=10)
+        # ScrolledText
+        self.output_text = scrolledtext.ScrolledText(
+            self,
+            height=20,
+            width=84,
+            wrap=tk.WORD,
+            font=("Times New Roman", 13)
+        )
+        self.output_text.grid(row=9, column=0, columnspan=2, pady=10, sticky="nsew")
+
+        self.grid_rowconfigure(9, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
 
     def update_progress(self, value: int, status: str):
         self.progress["value"] = value
@@ -158,7 +167,7 @@ class Application(tk.Tk):
         self.total_elapsed_time = self.format_elapsed_time(elapsed)
         self.time_label.config(text=f"Прошло: {self.total_elapsed_time}")
 
-        self.after(1000, self.update_timer)
+        self.after(10, self.update_timer)
 
     def format_elapsed_time(self, seconds: float) -> str:
         if seconds < 1:
@@ -211,6 +220,7 @@ class Application(tk.Tk):
             # === ЭТАП 1: Парсинг K-файла ===
             self.after(0, self.update_progress, 10, "Парсинг K-файла...")
             nodes, elements = parse_k_file(self.input_k_file_path)
+            print(len(elements))
         except Exception as e:
             messagebox.showerror("Ошибка", f"Произошла ошибка при сборе данных по k файлу: {e}")
             return
@@ -258,15 +268,31 @@ class Application(tk.Tk):
             # Отображаем результаты в текстовом поле
             self.output_text.delete(1.0, tk.END)
             self.output_text.insert(tk.END,
-                                    f"Промежуточные и конечные результаты сохранены в {output_path}\n"
+                              "══════════════════════════════════════════════════════════════\n"
+                                    "                                             РЕЗУЛЬТАТЫ ОБРАБОТКИ\n"
+                                    "══════════════════════════════════════════════════════════════\n\n"
 
-                                    f"\nВысота: {h}\n"
-                                    f"{'Домик есть и его влияние учитывается' if len(nodes_outside) != 0 else 'Домика нет'}\n"
-                                    f"Затраченное время: {self.total_elapsed_time}\n\n"
+                                    f"Файлы сохранены:\n"
+                                    f"   {output_path}\n\n"
 
-                                    f"CELL_SETS вставлен после {put_cell_sets}\n"
-                                    f"INITIAL_STRESS_SET вставлен после {put_stress_set}\n"
-                                    f"SET_SOLID вставлен после {put_set_solid}\n"
+                                    "Статистика модели:\n"
+                                    f"   • Конечных элементов: {len(elements):,} шт\n"
+                                    f"   • Высота модели: {h:.2f} единиц\n"
+                                    f"   • Подобласть: {subregion}\n"
+                                    f"   • Плотность: {abs(density):.3f}\n"
+                                    f"   • Коэффициент Пуассона: {PR:.3f}\n\n"
+                                    
+                                    "Особенности геометрии:\n"
+                                    f"   • {'Домик обнаружен (учитывается в расчетах)' if len(nodes_outside) != 0 else 'Домик отсутствует'}\n"
+                                    f"   • Координата анализа: {coordinate}\n\n"
+
+                                    f"Производительность:\n"
+                                    f"   • Время обработки: {self.total_elapsed_time}\n\n"
+
+                                    "Сгенерированные блоки:\n"
+                                    f"   • CELL_SETS → после '{put_cell_sets}'\n"
+                                    f"   • INITIAL_STRESS_SET → после '{put_stress_set}'\n"
+                                    f"   • SET_SOLID → после '{put_set_solid}'\n"
                                     )
 
         except Exception as e:
