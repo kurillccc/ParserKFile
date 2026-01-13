@@ -1,7 +1,9 @@
 import os
 import threading
+import time
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from tkinter import ttk
 from typing import Dict, Any
 
 from app.generate_yaml import generate_layer_data, write_to_yaml, write_to_cd_by_k_word
@@ -14,8 +16,12 @@ class Application(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
 
-        self.title("Парсинг KFile")
+        self.title("ParserKFile")
         self.geometry("600x600")
+
+        self.start_time = None
+        self.timer_running = False
+        self.total_elapsed_time = 0.0
 
         self.input_k_file_path: str = ""
         self.input_cd_file_path: str = ""
@@ -26,6 +32,7 @@ class Application(tk.Tk):
         self.create_widgets()
 
     def finish_processing_ui(self):
+        self.timer_running = False
         self.process_button.config(state="normal")
 
     def run_process_data_with_cleanup(self):
@@ -42,8 +49,16 @@ class Application(tk.Tk):
         if not self.input_cd_file_path:
             messagebox.showerror("Ошибка", "Выберите cd файл для обработки")
             return
+
+        self.progress["value"] = 0
+        self.status_label.config(text="Подготовка...")
+
         self.output_text.delete(1.0, tk.END)
         self.output_text.insert(tk.END, "⏳ Обработка... Пожалуйста, подождите.\n")
+
+        self.start_time = time.perf_counter()
+        self.timer_running = True
+        self.update_timer()
 
         self.process_button.config(state="disabled")
 
@@ -105,9 +120,62 @@ class Application(tk.Tk):
         self.process_button = tk.Button(self, text="Обработать", command=self.run_in_thread)
         self.process_button.grid(row=6, column=0, columnspan=2, pady=20)
 
+        # Прогресс бар
+        self.progress = ttk.Progressbar(
+            self,
+            orient="horizontal",
+            length=500,
+            mode="determinate",
+            maximum=100
+        )
+        self.progress.grid(row=7, column=0, columnspan=2, pady=10)
+
+        # Контейнер для статуса и времени
+        self.status_frame = tk.Frame(self)
+        self.status_frame.grid(row=8, column=0, columnspan=2, sticky="we", padx=10)
+
+        # Статус выполнения (слева)
+        self.status_label = tk.Label(self.status_frame, text="⌛Ожидание запуска", anchor="w")
+        self.status_label.pack(side="left", fill="x", expand=True)
+
+        # Прошло времени (справа)
+        self.time_label = tk.Label(self.status_frame, text="", anchor="e")
+        self.time_label.pack(side="right")
+
         # Текстовое поле для отображения результатов
         self.output_text = tk.Text(self, height=20, width=84)
-        self.output_text.grid(row=7, column=0, columnspan=2, pady=10)
+        self.output_text.grid(row=9, column=0, columnspan=2, pady=10)
+
+    def update_progress(self, value: int, status: str):
+        self.progress["value"] = value
+        self.status_label.config(text=status)
+
+    def update_timer(self):
+        if not self.timer_running:
+            return
+
+        elapsed = time.perf_counter() - self.start_time
+        self.total_elapsed_time = self.format_elapsed_time(elapsed)
+        self.time_label.config(text=f"Прошло: {self.total_elapsed_time}")
+
+        self.after(1000, self.update_timer)
+
+    def format_elapsed_time(self, seconds: float) -> str:
+        if seconds < 1:
+            return f"{int(seconds * 1000)} мс"
+
+        minutes, sec = divmod(int(seconds), 60)
+        hours, minutes = divmod(minutes, 60)
+        days, hours = divmod(hours, 24)
+
+        if days > 0:
+            return f"{days} д {hours:02}:{minutes:02}:{sec:02}"
+        if hours > 0:
+            return f"{hours:02}:{minutes:02}:{sec:02}"
+        if minutes > 0:
+            return f"{minutes:02}:{sec:02}"
+
+        return f"{sec} с"
 
     def select_input_k_file(self) -> None:
         """Открывает диалог для выбора файла"""
@@ -140,20 +208,24 @@ class Application(tk.Tk):
             return
 
         try:
-            # Парсим файл
+            # === ЭТАП 1: Парсинг K-файла ===
+            self.after(0, self.update_progress, 10, "Парсинг K-файла...")
             nodes, elements = parse_k_file(self.input_k_file_path)
         except Exception as e:
             messagebox.showerror("Ошибка", f"Произошла ошибка при сборе данных по k файлу: {e}")
             return
 
         try:
-            # Фильтруем элементы
+            # === ЭТАП 2: Фильтрация элементов ===
+            self.after(0, self.update_progress, 25, "Фильтрация элементов по подобласти...")
             filtered_elements = filter_elements_by_subregion(elements, subregion)
 
-            # Отделяем домик и грунт
+            # === ЭТАП 3: Поиск домика и высоты ===
+            self.after(0, self.update_progress, 40, "Анализ геометрии модели...")
             h, nodes, nodes_outside = find_h_and_home(nodes, coordinate)
 
-            # Находим элементы по слоям
+            # === ЭТАП 4: Формирование слоёв ===
+            self.after(0, self.update_progress, 60, "Формирование слоёв расчетной сетки...")
             layer_elements = find_elements_for_layer(nodes, filtered_elements, coordinate)
 
             element_counts = [len(elements) for elements in layer_elements.values() if
@@ -162,6 +234,8 @@ class Application(tk.Tk):
             if len(set(element_counts)) > 1:
                 messagebox.showerror("Предупреждение", "Количество элементов в слоях не совпадает!")
 
+            # === ЭТАП 5: Генерация напряжений ===
+            self.after(0, self.update_progress, 75, "Формирование начальных напряжений...")
             data: Dict[str, Any] = generate_layer_data(len(layer_elements), coordinate, density, PR, h, layer_elements)
         except Exception as e:
             messagebox.showerror("Ошибка", f"Произошла ошибка при обработке результатов: {e}")
@@ -173,19 +247,27 @@ class Application(tk.Tk):
             messagebox.showerror("Ошибка", f"Произошла ошибка при запаиси промежуточных результатов: {e}")
 
         try:
-            # Сделай cd файл
+            # === ЭТАП 6: Запись файлов ===
+            self.after(0, self.update_progress, 90, "Запись CD-файла...")
             output = write_to_cd_by_k_word(data, "CELL_SETS", self.input_cd_file_path, put_cell_sets)
             write_to_cd_by_k_word(data, "INITIAL_STRESS_SET", output, put_stress_set)
             output_path: str = write_to_cd_by_k_word(data, "SET_SOLID", output, put_set_solid)
 
+            self.after(0, self.update_progress, 100, "Готово ✔")
+
             # Отображаем результаты в текстовом поле
             self.output_text.delete(1.0, tk.END)
-            self.output_text.insert(tk.END, f"Промежуточные и конечные результаты сохранены в {output_path}\n"
-                                            f"\nВысота: {h}\n"
-                                            f"{'Домик есть и его влияние учитывается' if len(nodes_outside) != 0 else 'Домика нет'}\n\n"
-                                            f"CELL_SETS вставлен после {put_cell_sets}\n"
-                                            f"INITIAL_STRESS_SET вставлен после {put_stress_set}\n"
-                                            f"SET_SOLID вставлен после {put_set_solid}\n")
+            self.output_text.insert(tk.END,
+                                    f"Промежуточные и конечные результаты сохранены в {output_path}\n"
+
+                                    f"\nВысота: {h}\n"
+                                    f"{'Домик есть и его влияние учитывается' if len(nodes_outside) != 0 else 'Домика нет'}\n"
+                                    f"Затраченное время: {self.total_elapsed_time}\n\n"
+
+                                    f"CELL_SETS вставлен после {put_cell_sets}\n"
+                                    f"INITIAL_STRESS_SET вставлен после {put_stress_set}\n"
+                                    f"SET_SOLID вставлен после {put_set_solid}\n"
+                                    )
 
         except Exception as e:
             messagebox.showerror("Ошибка", f"Произошла ошибка при записи данных в cd файл: {e}")
