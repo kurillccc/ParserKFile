@@ -1,6 +1,7 @@
 import os
 import threading
 import tkinter as tk
+from tkinter import ttk
 from tkinter import filedialog, messagebox
 from typing import Dict, Any
 
@@ -42,6 +43,10 @@ class Application(tk.Tk):
         if not self.input_cd_file_path:
             messagebox.showerror("Ошибка", "Выберите cd файл для обработки")
             return
+
+        self.progress["value"] = 0
+        self.status_label.config(text="Подготовка...")
+
         self.output_text.delete(1.0, tk.END)
         self.output_text.insert(tk.END, "⏳ Обработка... Пожалуйста, подождите.\n")
 
@@ -105,9 +110,27 @@ class Application(tk.Tk):
         self.process_button = tk.Button(self, text="Обработать", command=self.run_in_thread)
         self.process_button.grid(row=6, column=0, columnspan=2, pady=20)
 
+        # Прогресс бар
+        self.progress = ttk.Progressbar(
+            self,
+            orient="horizontal",
+            length=500,
+            mode="determinate",
+            maximum=100
+        )
+        self.progress.grid(row=7, column=0, columnspan=2, pady=10)
+
+        # Статус выполнения
+        self.status_label = tk.Label(self, text="Ожидание запуска", anchor="w")
+        self.status_label.grid(row=8, column=0, columnspan=2, sticky="w", padx=10)
+
         # Текстовое поле для отображения результатов
         self.output_text = tk.Text(self, height=20, width=84)
-        self.output_text.grid(row=7, column=0, columnspan=2, pady=10)
+        self.output_text.grid(row=9, column=0, columnspan=2, pady=10)
+
+    def update_progress(self, value: int, status: str):
+        self.progress["value"] = value
+        self.status_label.config(text=status)
 
     def select_input_k_file(self) -> None:
         """Открывает диалог для выбора файла"""
@@ -140,20 +163,24 @@ class Application(tk.Tk):
             return
 
         try:
-            # Парсим файл
+            # === ЭТАП 1: Парсинг K-файла ===
+            self.after(0, self.update_progress, 10, "Парсинг K-файла...")
             nodes, elements = parse_k_file(self.input_k_file_path)
         except Exception as e:
             messagebox.showerror("Ошибка", f"Произошла ошибка при сборе данных по k файлу: {e}")
             return
 
         try:
-            # Фильтруем элементы
+            # === ЭТАП 2: Фильтрация элементов ===
+            self.after(0, self.update_progress, 25, "Фильтрация элементов по подобласти...")
             filtered_elements = filter_elements_by_subregion(elements, subregion)
 
-            # Отделяем домик и грунт
+            # === ЭТАП 3: Поиск домика и высоты ===
+            self.after(0, self.update_progress, 40, "Анализ геометрии модели...")
             h, nodes, nodes_outside = find_h_and_home(nodes, coordinate)
 
-            # Находим элементы по слоям
+            # === ЭТАП 4: Формирование слоёв ===
+            self.after(0, self.update_progress, 60, "Формирование слоёв расчетной сетки...")
             layer_elements = find_elements_for_layer(nodes, filtered_elements, coordinate)
 
             element_counts = [len(elements) for elements in layer_elements.values() if
@@ -162,6 +189,8 @@ class Application(tk.Tk):
             if len(set(element_counts)) > 1:
                 messagebox.showerror("Предупреждение", "Количество элементов в слоях не совпадает!")
 
+            # === ЭТАП 5: Генерация напряжений ===
+            self.after(0, self.update_progress, 75, "Формирование начальных напряжений...")
             data: Dict[str, Any] = generate_layer_data(len(layer_elements), coordinate, density, PR, h, layer_elements)
         except Exception as e:
             messagebox.showerror("Ошибка", f"Произошла ошибка при обработке результатов: {e}")
@@ -173,10 +202,13 @@ class Application(tk.Tk):
             messagebox.showerror("Ошибка", f"Произошла ошибка при запаиси промежуточных результатов: {e}")
 
         try:
-            # Сделай cd файл
+            # === ЭТАП 6: Запись файлов ===
+            self.after(0, self.update_progress, 90, "Запись CD-файла...")
             output = write_to_cd_by_k_word(data, "CELL_SETS", self.input_cd_file_path, put_cell_sets)
             write_to_cd_by_k_word(data, "INITIAL_STRESS_SET", output, put_stress_set)
             output_path: str = write_to_cd_by_k_word(data, "SET_SOLID", output, put_set_solid)
+
+            self.after(0, self.update_progress, 100, "Готово ✔")
 
             # Отображаем результаты в текстовом поле
             self.output_text.delete(1.0, tk.END)
