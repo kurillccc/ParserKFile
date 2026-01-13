@@ -1,8 +1,9 @@
 import os
 import threading
+import time
 import tkinter as tk
-from tkinter import ttk
 from tkinter import filedialog, messagebox
+from tkinter import ttk
 from typing import Dict, Any
 
 from app.generate_yaml import generate_layer_data, write_to_yaml, write_to_cd_by_k_word
@@ -15,8 +16,12 @@ class Application(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
 
-        self.title("Парсинг KFile")
+        self.title("ParserKFile")
         self.geometry("600x600")
+
+        self.start_time = None
+        self.timer_running = False
+        self.total_elapsed_time = 0.0
 
         self.input_k_file_path: str = ""
         self.input_cd_file_path: str = ""
@@ -27,6 +32,7 @@ class Application(tk.Tk):
         self.create_widgets()
 
     def finish_processing_ui(self):
+        self.timer_running = False
         self.process_button.config(state="normal")
 
     def run_process_data_with_cleanup(self):
@@ -49,6 +55,10 @@ class Application(tk.Tk):
 
         self.output_text.delete(1.0, tk.END)
         self.output_text.insert(tk.END, "⏳ Обработка... Пожалуйста, подождите.\n")
+
+        self.start_time = time.perf_counter()
+        self.timer_running = True
+        self.update_timer()
 
         self.process_button.config(state="disabled")
 
@@ -120,9 +130,17 @@ class Application(tk.Tk):
         )
         self.progress.grid(row=7, column=0, columnspan=2, pady=10)
 
-        # Статус выполнения
-        self.status_label = tk.Label(self, text="Ожидание запуска", anchor="w")
-        self.status_label.grid(row=8, column=0, columnspan=2, sticky="w", padx=10)
+        # Контейнер для статуса и времени
+        self.status_frame = tk.Frame(self)
+        self.status_frame.grid(row=8, column=0, columnspan=2, sticky="we", padx=10)
+
+        # Статус выполнения (слева)
+        self.status_label = tk.Label(self.status_frame, text="⌛Ожидание запуска", anchor="w")
+        self.status_label.pack(side="left", fill="x", expand=True)
+
+        # Прошло времени (справа)
+        self.time_label = tk.Label(self.status_frame, text="", anchor="e")
+        self.time_label.pack(side="right")
 
         # Текстовое поле для отображения результатов
         self.output_text = tk.Text(self, height=20, width=84)
@@ -131,6 +149,33 @@ class Application(tk.Tk):
     def update_progress(self, value: int, status: str):
         self.progress["value"] = value
         self.status_label.config(text=status)
+
+    def update_timer(self):
+        if not self.timer_running:
+            return
+
+        elapsed = time.perf_counter() - self.start_time
+        self.total_elapsed_time = self.format_elapsed_time(elapsed)
+        self.time_label.config(text=f"Прошло: {self.total_elapsed_time}")
+
+        self.after(1000, self.update_timer)
+
+    def format_elapsed_time(self, seconds: float) -> str:
+        if seconds < 1:
+            return f"{int(seconds * 1000)} мс"
+
+        minutes, sec = divmod(int(seconds), 60)
+        hours, minutes = divmod(minutes, 60)
+        days, hours = divmod(hours, 24)
+
+        if days > 0:
+            return f"{days} д {hours:02}:{minutes:02}:{sec:02}"
+        if hours > 0:
+            return f"{hours:02}:{minutes:02}:{sec:02}"
+        if minutes > 0:
+            return f"{minutes:02}:{sec:02}"
+
+        return f"{sec} с"
 
     def select_input_k_file(self) -> None:
         """Открывает диалог для выбора файла"""
@@ -212,12 +257,17 @@ class Application(tk.Tk):
 
             # Отображаем результаты в текстовом поле
             self.output_text.delete(1.0, tk.END)
-            self.output_text.insert(tk.END, f"Промежуточные и конечные результаты сохранены в {output_path}\n"
-                                            f"\nВысота: {h}\n"
-                                            f"{'Домик есть и его влияние учитывается' if len(nodes_outside) != 0 else 'Домика нет'}\n\n"
-                                            f"CELL_SETS вставлен после {put_cell_sets}\n"
-                                            f"INITIAL_STRESS_SET вставлен после {put_stress_set}\n"
-                                            f"SET_SOLID вставлен после {put_set_solid}\n")
+            self.output_text.insert(tk.END,
+                                    f"Промежуточные и конечные результаты сохранены в {output_path}\n"
+
+                                    f"\nВысота: {h}\n"
+                                    f"{'Домик есть и его влияние учитывается' if len(nodes_outside) != 0 else 'Домика нет'}\n"
+                                    f"Затраченное время: {self.total_elapsed_time}\n\n"
+
+                                    f"CELL_SETS вставлен после {put_cell_sets}\n"
+                                    f"INITIAL_STRESS_SET вставлен после {put_stress_set}\n"
+                                    f"SET_SOLID вставлен после {put_set_solid}\n"
+                                    )
 
         except Exception as e:
             messagebox.showerror("Ошибка", f"Произошла ошибка при записи данных в cd файл: {e}")
