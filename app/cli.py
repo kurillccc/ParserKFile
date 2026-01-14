@@ -1,7 +1,7 @@
 import os
-from typing import Dict, Any
-
 import click
+
+from typing import Dict, Any
 
 from app.generate_yaml import write_to_yaml, generate_layer_data, write_to_cd_by_k_word
 from app.parser import parse_k_file

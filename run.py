@@ -1,15 +1,21 @@
 import os
 import threading
-import time
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from typing import Dict, Any
 
-from app.generate_yaml import generate_layer_data, write_to_yaml, write_to_cd_by_k_word
-from app.parser import parse_k_file
-from app.processor import filter_elements_by_subregion, find_elements_for_layer, find_h_and_home
-from app.settings import put_cell_sets, put_stress_set, put_set_solid
-from ui.components import FileInput, TextInput, DropdownInput, ProgressDisplay, OutputText, ActionButton
+from app import (
+    generate_layer_data,
+    write_to_cd_by_k_word,
+    parse_k_file,
+    filter_elements_by_subregion,
+    find_elements_for_layer,
+    find_h_and_home,put_cell_sets,
+    put_stress_set,
+    put_set_solid
+)
+from ui import FileInput, TextInput, DropdownInput, ProgressDisplay, OutputText, ActionButton
+from utils import ResultFormatter, InputValidator, Timer
 
 
 class Application(tk.Tk):
@@ -19,9 +25,8 @@ class Application(tk.Tk):
         self.title("ParserKFile")
         self.geometry("600x600")
 
-        self.start_time = None
+        self.timer = Timer()
         self.timer_running = False
-        self.total_elapsed_time = 0.0
 
         self.input_k_file_path: str = ""
         self.input_cd_file_path: str = ""
@@ -33,43 +38,42 @@ class Application(tk.Tk):
 
     def finish_processing_ui(self):
         self.timer_running = False
+        self.timer.stop()
         self.process_button.config(state="normal")
 
     def run_process_data_with_cleanup(self):
         try:
             self.process_data()
         finally:
-            # Вернём управление в основной поток, чтобы включить кнопку
             self.after(0, self.finish_processing_ui)
 
     def run_in_thread(self):
-        if not self.input_k_file_path:
-            messagebox.showerror("Ошибка", "Выберите k файл для обработки")
-            return
-        if not self.input_cd_file_path:
-            messagebox.showerror("Ошибка", "Выберите cd файл для обработки")
+        valid, error_msg = InputValidator.validate_file_paths(
+            self.input_k_file_path,
+            self.input_cd_file_path
+        )
+        if not valid:
+            messagebox.showerror("Ошибка", error_msg)
             return
 
         self.progress_display.update_progress(0)
         self.progress_display.update_status("Подготовка...")
 
         self.output_text.clear()
-        self.output_text.insert("⏳ Обработка... Пожалуйста, подождите.\n")
+        self.output_text.insert(ResultFormatter.format_processing_message())
 
-        self.start_time = time.perf_counter()
+        self.timer.start()
         self.timer_running = True
         self.update_timer()
 
         self.process_button.config(state="disabled")
 
-        # Запускаем поток
         thread = threading.Thread(target=self.run_process_data_with_cleanup)
         thread.start()
 
     def create_widgets(self) -> None:
         """Создание элементов интерфейса"""
 
-        # Компоненты UI
         self.k_file_input = FileInput(
             self,
             "Выбрать k файл",
@@ -119,28 +123,10 @@ class Application(tk.Tk):
         if not self.timer_running:
             return
 
-        elapsed = time.perf_counter() - self.start_time
-        self.total_elapsed_time = self.format_elapsed_time(elapsed)
-        self.progress_display.update_time(f"Прошло: {self.total_elapsed_time}")
+        elapsed = self.timer.get_elapsed_formatted()
+        self.progress_display.update_time(f"Прошло: {elapsed}")
 
         self.after(10, self.update_timer)
-
-    def format_elapsed_time(self, seconds: float) -> str:
-        if seconds < 1:
-            return f"{int(seconds * 1000)} мс"
-
-        minutes, sec = divmod(int(seconds), 60)
-        hours, minutes = divmod(minutes, 60)
-        days, hours = divmod(hours, 24)
-
-        if days > 0:
-            return f"{days} д {hours:02}:{minutes:02}:{sec:02}"
-        if hours > 0:
-            return f"{hours:02}:{minutes:02}:{sec:02}"
-        if minutes > 0:
-            return f"{minutes:02}:{sec:02}"
-
-        return f"{sec} с"
 
     def select_input_k_file(self) -> None:
         """Открывает диалог для выбора файла"""
@@ -157,26 +143,30 @@ class Application(tk.Tk):
 
     def process_data(self) -> None:
         """Обрабатывает данные при нажатии кнопки"""
-        if not self.input_k_file_path:
-            messagebox.showerror("Ошибка", "Выберите k файл для обработки")
+        valid, error_msg = InputValidator.validate_file_paths(
+            self.input_k_file_path,
+            self.input_cd_file_path
+        )
+        if not valid:
+            messagebox.showerror("Ошибка", error_msg)
             return
-        if not self.input_cd_file_path:
-            messagebox.showerror("Ошибка", "Выберите cd файл для обработки")
+
+        valid, numbers, error_msg = InputValidator.validate_numbers(
+            self.subregion_input.get(),
+            self.density_input.get(),
+            self.pr_input.get()
+        )
+        if not valid:
+            messagebox.showerror("Ошибка", error_msg)
             return
-        try:
-            subregion: int = int(self.subregion_input.get())
-            density: float = - float(self.density_input.get())
-            PR: float = float(self.pr_input.get())
-            coordinate: str = self.coordinate_input.get()
-        except Exception as e:
-            messagebox.showerror("Ошибка", f"Произошла ошибка входных данных: {e}")
-            return
+
+        subregion, density, PR = numbers
+        coordinate = self.coordinate_input.get()
 
         try:
             # === ЭТАП 1: Парсинг K-файла ===
             self.after(0, self.update_progress, 10, "Парсинг K-файла...")
             nodes, elements = parse_k_file(self.input_k_file_path)
-            print(len(elements))
         except Exception as e:
             messagebox.showerror("Ошибка", f"Произошла ошибка при сборе данных по k файлу: {e}")
             return
@@ -194,8 +184,7 @@ class Application(tk.Tk):
             self.after(0, self.update_progress, 60, "Формирование слоёв расчетной сетки...")
             layer_elements = find_elements_for_layer(nodes, filtered_elements, coordinate)
 
-            element_counts = [len(elements) for elements in layer_elements.values() if
-                              elements]  # исключили пустые слои
+            element_counts = [len(elements) for elements in layer_elements.values() if elements]
 
             if len(set(element_counts)) > 1:
                 messagebox.showerror("Предупреждение", "Количество элементов в слоях не совпадает!")
@@ -208,11 +197,6 @@ class Application(tk.Tk):
             return
 
         try:
-            output_file_path: str = write_to_yaml(data, self.input_k_file_path, self.output_folder)
-        except Exception as e:
-            messagebox.showerror("Ошибка", f"Произошла ошибка при запаиси промежуточных результатов: {e}")
-
-        try:
             # === ЭТАП 6: Запись файлов ===
             self.after(0, self.update_progress, 90, "Запись CD-файла...")
             output = write_to_cd_by_k_word(data, "CELL_SETS", self.input_cd_file_path, put_cell_sets)
@@ -221,35 +205,23 @@ class Application(tk.Tk):
 
             self.after(0, self.update_progress, 100, "Готово ✔")
 
-            # Отображаем результаты в текстовом поле
-            self.output_text.clear()
-            self.output_text.insert(
-                "══════════════════════════════════════════════════════════════\n"
-                "                                             РЕЗУЛЬТАТЫ ОБРАБОТКИ\n"
-                "══════════════════════════════════════════════════════════════\n\n"
-
-                f"Файлы сохранены:\n"
-                f"   {output_path}\n\n"
-
-                "Статистика модели:\n"
-                f"   • Конечных элементов: {len(elements):,} шт\n"
-                f"   • Высота модели: {h:.2f} единиц\n"
-                f"   • Подобласть: {subregion}\n"
-                f"   • Плотность: {abs(density):.3f}\n"
-                f"   • Коэффициент Пуассона: {PR:.3f}\n\n"
-
-                "Особенности геометрии:\n"
-                f"   • {'Домик обнаружен (учитывается в расчетах)' if len(nodes_outside) != 0 else 'Домик отсутствует'}\n"
-                f"   • Координата анализа: {coordinate}\n\n"
-
-                f"Производительность:\n"
-                f"   • Время обработки: {self.total_elapsed_time}\n\n"
-
-                "Сгенерированные блоки:\n"
-                f"   • CELL_SETS → после '{put_cell_sets}'\n"
-                f"   • INITIAL_STRESS_SET → после '{put_stress_set}'\n"
-                f"   • SET_SOLID → после '{put_set_solid}'\n"
+            formatted_results = ResultFormatter.format_results(
+                output_path=output_path,
+                elements_count=len(elements),
+                height=h,
+                subregion=subregion,
+                density=density,
+                pr=PR,
+                has_home=len(nodes_outside) != 0,
+                coordinate=coordinate,
+                elapsed_time=self.timer.get_elapsed_formatted(),
+                cell_sets_marker=put_cell_sets,
+                stress_set_marker=put_stress_set,
+                solid_set_marker=put_set_solid
             )
+
+            self.output_text.clear()
+            self.output_text.insert(formatted_results)
 
         except Exception as e:
             messagebox.showerror("Ошибка", f"Произошла ошибка при записи данных в cd файл: {e}")
