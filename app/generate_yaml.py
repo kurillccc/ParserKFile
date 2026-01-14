@@ -1,11 +1,10 @@
 import os
 import sys
-import uuid
-from typing import Dict, List, Any
-
 import yaml
+import uuid
+import tempfile
 
-from app.processor import find_elements_for_layer
+from typing import Dict, List, Any
 from app.settings import input_file_name, output_file_name, BASE_DIR
 
 
@@ -27,7 +26,6 @@ def generate_layer_data(
         h: float,
         layer_elements: Dict[float, List[int]]
 ) -> Dict[str, Any]:
-
     cell_sets = []
     initial_stress_set = []
     set_solid = []
@@ -97,7 +95,6 @@ def generate_layer_data(
     }
 
 
-
 def get_output_dir():
     if getattr(sys, 'frozen', False):
         # Если приложение собрано в .exe или .app — сохраняем на рабочий стол
@@ -135,16 +132,12 @@ def write_to_yaml(data: Dict[str, Any], file_path: str, output_path: str) -> str
     return directory
 
 
-import tempfile
-
-
 def write_to_cd_by_k_word(
         data: Dict[str, Any],
         section_name: str,
         file_path_cd: str,
         key_words: List[str]
 ) -> str:
-
     # --- нормализуем путь ---
     if not file_path_cd.endswith(".cd"):
         if "output" not in file_path_cd:
@@ -170,7 +163,7 @@ def write_to_cd_by_k_word(
 
     try:
         with open(file_path_cd, "r", encoding="utf-8", errors="ignore") as src, \
-             open(tmp_path, "w", encoding="utf-8") as dst:
+                open(tmp_path, "w", encoding="utf-8") as dst:
 
             for line in src:
                 stripped = line.strip()
@@ -211,8 +204,7 @@ def write_to_cd_by_k_word(
     # если надо копировать результат отдельно
     if output_file_path != file_path_cd:
         with open(file_path_cd, "r", encoding="utf-8") as src, \
-             open(output_file_path, "w", encoding="utf-8") as dst:
+                open(output_file_path, "w", encoding="utf-8") as dst:
             dst.writelines(src)
 
     return output_file_path
-
