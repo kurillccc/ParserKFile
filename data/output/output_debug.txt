@@ -3,94 +3,94 @@ CELL_SETS:
     Name: set1
     Count: 9
     _ref_used_: 1
-    uid: b50671d86b9040ef8f3c8f5d7a9cd412
+    uid: 89db18fab18843e1b2e1b0faab551970
     parentUid: ''
     __excludeRun__: '~'
   - Id: 2
     Name: set2
     Count: 9
     _ref_used_: 1
-    uid: 8cfe928f225b448eae916b73202f583d
+    uid: 6d65410da54f4bf08f37ce33acf227b1
     parentUid: ''
     __excludeRun__: '~'
   - Id: 3
     Name: set3
     Count: 9
     _ref_used_: 1
-    uid: 4bb0002b99fc43a5b8122f53d746808a
+    uid: 253b970cc48d42dd99880ac3a0b78234
     parentUid: ''
     __excludeRun__: '~'
 INITIAL_STRESS_SET:
   - ESID: 1
     SIGXX: -0.0
-    SIGYY: -0.0
+    SIGYY: -24.5
     SIGZZ: -0.0
     SIGXY: 0
     SIGYZ: 0
     SIGZX: 0
     EPS: 0
     name: set1
-    uid: 616991c79f6a47f4807684ead8dd08df
+    uid: 5e607680bc4a41e387618ddbb23cc641
     parentUid: ''
     __excludeRun__: '~'
   - ESID: 2
     SIGXX: -0.0
-    SIGYY: -0.0
+    SIGYY: -14.700000000000001
     SIGZZ: -0.0
     SIGXY: 0
     SIGYZ: 0
     SIGZX: 0
     EPS: 0
     name: set2
-    uid: 0ce11b24dc4b43feb665277aab6a87fc
+    uid: aaac8edc61b34b8ebc5f87eaa6f0f4a8
     parentUid: ''
     __excludeRun__: '~'
   - ESID: 3
     SIGXX: -0.0
-    SIGYY: -0.0
+    SIGYY: -4.9
     SIGZZ: -0.0
     SIGXY: 0
     SIGYZ: 0
     SIGZX: 0
     EPS: 0
     name: set3
-    uid: 99f4b6a3bbd84747bf3f7582d4d803e3
+    uid: 2227ebbc5bc640d4acb563801869820d
     parentUid: ''
     __excludeRun__: '~'
 SET_SOLID:
   - NAME: set1
     SID: 1
     ELEMENTS:
+      - 1
       - 2
-      - 6
-      - 7
-      - 12
-      - 13
+      - 3
+      - 16
+      - 18
       - 20
-      - 21
+      - 22
       - 24
-      - 26
+      - 25
   - NAME: set2
     SID: 2
     ELEMENTS:
-      - 3
-      - 8
+      - 5
+      - 7
       - 9
-      - 14
-      - 15
-      - 22
+      - 17
+      - 19
+      - 21
       - 23
-      - 25
+      - 26
       - 27
   - NAME: set3
     SID: 3
     ELEMENTS:
-      - 1
       - 4
-      - 5
+      - 6
+      - 8
       - 10
       - 11
-      - 16
-      - 17
-      - 18
-      - 19
+      - 12
+      - 13
+      - 14
+      - 15

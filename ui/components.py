@@ -54,7 +54,6 @@ class DropdownInput:
     def __init__(self, parent, label_text, options):
         self.frame = tk.Frame(parent)
 
-        # Делаем второй столбец растягивающимся
         self.frame.grid_columnconfigure(1, weight=1)
 
         self.label = tk.Label(self.frame, text=label_text, anchor="w")

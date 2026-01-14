@@ -23,6 +23,50 @@ CELL_SETS:
     Name: set1
     Count: 9
     _ref_used_: 1
+    uid: 54413defa89541d8b2dc15259dcb7171
+    parentUid: ''
+    __excludeRun__: '~'
+  - Id: 2
+    Name: set2
+    Count: 9
+    _ref_used_: 1
+    uid: 832a34313d7a41379f800c61b623c542
+    parentUid: ''
+    __excludeRun__: '~'
+  - Id: 3
+    Name: set3
+    Count: 9
+    _ref_used_: 1
+    uid: 8ca9c1c19c1b40428f6e6b6a01e8dae6
+    parentUid: ''
+    __excludeRun__: '~'
+CELL_SETS:
+  - Id: 1
+    Name: set1
+    Count: 9
+    _ref_used_: 1
+    uid: 89db18fab18843e1b2e1b0faab551970
+    parentUid: ''
+    __excludeRun__: '~'
+  - Id: 2
+    Name: set2
+    Count: 9
+    _ref_used_: 1
+    uid: 6d65410da54f4bf08f37ce33acf227b1
+    parentUid: ''
+    __excludeRun__: '~'
+  - Id: 3
+    Name: set3
+    Count: 9
+    _ref_used_: 1
+    uid: 253b970cc48d42dd99880ac3a0b78234
+    parentUid: ''
+    __excludeRun__: '~'
+CELL_SETS:
+  - Id: 1
+    Name: set1
+    Count: 9
+    _ref_used_: 1
     uid: b50671d86b9040ef8f3c8f5d7a9cd412
     parentUid: ''
     __excludeRun__: '~'
@@ -288,37 +332,37 @@ INITIAL_STRESS_SET:
   - ESID: 1
     SIGXX: -0.0
     SIGYY: -0.0
-    SIGZZ: -0.0
+    SIGZZ: -24.5
     SIGXY: 0
     SIGYZ: 0
     SIGZX: 0
     EPS: 0
     name: set1
-    uid: 616991c79f6a47f4807684ead8dd08df
+    uid: 5c483f8651c344f38ad1ebeb4c2b4f6c
     parentUid: ''
     __excludeRun__: '~'
   - ESID: 2
     SIGXX: -0.0
     SIGYY: -0.0
-    SIGZZ: -0.0
+    SIGZZ: -14.700000000000001
     SIGXY: 0
     SIGYZ: 0
     SIGZX: 0
     EPS: 0
     name: set2
-    uid: 0ce11b24dc4b43feb665277aab6a87fc
+    uid: c74d2bb93df348df8d827bce77d83c8f
     parentUid: ''
     __excludeRun__: '~'
   - ESID: 3
     SIGXX: -0.0
     SIGYY: -0.0
-    SIGZZ: -0.0
+    SIGZZ: -4.9
     SIGXY: 0
     SIGYZ: 0
     SIGZX: 0
     EPS: 0
     name: set3
-    uid: 99f4b6a3bbd84747bf3f7582d4d803e3
+    uid: a904e099cd77461194a28fc587ed2c6e
     parentUid: ''
     __excludeRun__: '~'
 PART:
