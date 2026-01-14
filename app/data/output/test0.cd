@@ -284,6 +284,43 @@ COMMON_SETTINGS:
   uid: 02a991095d9fa8fc
   parentUid: ''
   __excludeRun__: ~
+INITIAL_STRESS_SET:
+  - ESID: 1
+    SIGXX: -0.0
+    SIGYY: -0.0
+    SIGZZ: -0.0
+    SIGXY: 0
+    SIGYZ: 0
+    SIGZX: 0
+    EPS: 0
+    name: set1
+    uid: 616991c79f6a47f4807684ead8dd08df
+    parentUid: ''
+    __excludeRun__: '~'
+  - ESID: 2
+    SIGXX: -0.0
+    SIGYY: -0.0
+    SIGZZ: -0.0
+    SIGXY: 0
+    SIGYZ: 0
+    SIGZX: 0
+    EPS: 0
+    name: set2
+    uid: 0ce11b24dc4b43feb665277aab6a87fc
+    parentUid: ''
+    __excludeRun__: '~'
+  - ESID: 3
+    SIGXX: -0.0
+    SIGYY: -0.0
+    SIGZZ: -0.0
+    SIGXY: 0
+    SIGYZ: 0
+    SIGZX: 0
+    EPS: 0
+    name: set3
+    uid: 99f4b6a3bbd84747bf3f7582d4d803e3
+    parentUid: ''
+    __excludeRun__: '~'
 PART:
   - NAME: '���������-1'
     PID: 1
@@ -428,3 +465,41 @@ NL_STATIC_PARAMS:
       DIVERGENCE CONTROL: 1
       LINE SEARCH: 0
       MAX AUG ITERATIONS: 10
+
+SET_SOLID:
+  - NAME: set1
+    SID: 1
+    ELEMENTS:
+      - 2
+      - 6
+      - 7
+      - 12
+      - 13
+      - 20
+      - 21
+      - 24
+      - 26
+  - NAME: set2
+    SID: 2
+    ELEMENTS:
+      - 3
+      - 8
+      - 9
+      - 14
+      - 15
+      - 22
+      - 23
+      - 25
+      - 27
+  - NAME: set3
+    SID: 3
+    ELEMENTS:
+      - 1
+      - 4
+      - 5
+      - 10
+      - 11
+      - 16
+      - 17
+      - 18
+      - 19
