@@ -1,5 +1,17 @@
+import platform
+
+
 class ResultFormatter:
     """Форматирование результатов обработки"""
+
+    @staticmethod
+    def _get_separator() -> str:
+        """Возвращает разделитель в зависимости от ОС"""
+        system = platform.system()
+        if system == "Windows":
+            return "═" * 48
+        elif system == "Darwin":
+            return "=" * 62
 
     @staticmethod
     def format_results(
@@ -16,14 +28,15 @@ class ResultFormatter:
             stress_set_marker: str,
             solid_set_marker: str
     ) -> str:
-        """Форматирует результаты в красивый текст"""
+        """Форматирует результаты в текст"""
 
+        separator = ResultFormatter._get_separator()
         home_status = "Домик обнаружен (учитывается в расчетах)" if has_home else "Домик отсутствует"
 
         return f"""
-══════════════════════════════════════════════════════════════
+{separator}
                                              РЕЗУЛЬТАТЫ ОБРАБОТКИ
-══════════════════════════════════════════════════════════════
+{separator}
 
 Файлы сохранены:
    {output_path}
