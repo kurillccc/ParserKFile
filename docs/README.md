@@ -50,15 +50,15 @@
 
 ### 💻 MacOS
 
-<img width="400" alt="image" src="https://github.com/user-attachments/assets/0739d5d8-2c4d-4d63-b751-0872f386196e" />
+<img width="400" height="500" alt="image" src="https://github.com/user-attachments/assets/0739d5d8-2c4d-4d63-b751-0872f386196e" />
 
-<img width="400" alt="image" src="https://github.com/user-attachments/assets/99a573cc-8591-407f-b010-55adf61fff1b" />
+<img width="400" height="500" alt="image" src="https://github.com/user-attachments/assets/99a573cc-8591-407f-b010-55adf61fff1b" />
 
 ### ⊞ Windows
 
-<img width="400" alt="image" src="https://github.com/user-attachments/assets/5d8aecf6-6a2f-4a73-913a-005cbbe4750a" />
+<img width="400" height="500" alt="image" src="https://github.com/user-attachments/assets/5d8aecf6-6a2f-4a73-913a-005cbbe4750a" />
 
-<img width="400" alt="image" src="https://github.com/user-attachments/assets/fc16a316-53bb-4abe-8302-4111991125b4" />
+<img width="400" height="500" alt="image" src="https://github.com/user-attachments/assets/fc16a316-53bb-4abe-8302-4111991125b4" />
 
 ### Результат работы в "Логос Прочность"
 
