@@ -28,8 +28,10 @@ class FileInput:
     def get_widget(self):
         return self.frame
 
+
 class TextInput:
     """Компонент для ввода параметров"""
+
     def __init__(self, parent, label_text):
         self.frame = tk.Frame(parent)
 

@@ -1,11 +1,12 @@
 import os
 import sys
-import yaml
-import uuid
 import tempfile
-
+import uuid
 from typing import Dict, List, Any
-from app.settings import input_file_name, output_file_name, BASE_DIR
+
+import yaml
+
+from core.settings import input_file_name, output_file_name, BASE_DIR
 
 
 class CustomDumper(yaml.Dumper):

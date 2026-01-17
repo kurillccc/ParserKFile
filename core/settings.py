@@ -13,4 +13,8 @@ put_stress_set: List[str] = ["COMMON_SETTINGS:"]
 # После NL_STATIC_PARAMS: вставится set_solid
 put_set_solid: List[str] = ["NL_STATIC_PARAMS:"]
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(
+    os.path.dirname(
+        os.path.abspath(__file__)
+    )
+)
