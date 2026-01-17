@@ -1,17 +1,17 @@
 from typing import Dict, Any
 
-from app import (
-    parse_k_file,
+from utils import InputValidator, generate_layer_data, write_to_cd_by_k_word
+from .parser import parse_k_file
+from .processor import (
     filter_elements_by_subregion,
     find_h_and_home,
-    find_elements_for_layer,
-    generate_layer_data,
-    write_to_cd_by_k_word,
+    find_elements_for_layer
+)
+from .settings import (
     put_cell_sets,
     put_stress_set,
     put_set_solid
 )
-from utils import InputValidator
 
 
 class ProcessingService:

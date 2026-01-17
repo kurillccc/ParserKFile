@@ -2,13 +2,17 @@ import os
 from typing import Dict, Any
 
 import click
-
-from app.generate_yaml import write_to_yaml, generate_layer_data, write_to_cd_by_k_word
-from app.parser import parse_k_file
-from app.processor import filter_elements_by_subregion, group_nodes_by_coordinate, find_elements_for_layer, \
+from core.parser import parse_k_file
+from core.processor import (
+    filter_elements_by_subregion,
+    group_nodes_by_coordinate,
+    find_elements_for_layer,
     find_h_and_home
-from app.settings import input_file_name, put_cell_sets, put_stress_set, put_set_solid
-from settings import BASE_DIR
+)
+from core.settings import BASE_DIR
+
+from core.settings import input_file_name, put_cell_sets, put_stress_set, put_set_solid
+from utils.generate_yaml import write_to_yaml, generate_layer_data, write_to_cd_by_k_word
 
 
 @click.command()
