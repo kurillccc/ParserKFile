@@ -24,9 +24,6 @@ class ResultFormatter:
             has_home: bool,
             coordinate: str,
             elapsed_time: str,
-            cell_sets_marker: str,
-            stress_set_marker: str,
-            solid_set_marker: str
     ) -> str:
         """Форматирует результаты в текст"""
 
@@ -55,10 +52,6 @@ class ResultFormatter:
 Производительность:
    • Время обработки: {elapsed_time}
 
-Сгенерированные блоки:
-   • CELL_SETS → после '{cell_sets_marker}'
-   • INITIAL_STRESS_SET → после '{stress_set_marker}'
-   • SET_SOLID → после '{solid_set_marker}'
 """
 
     @staticmethod
