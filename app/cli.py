@@ -1,24 +1,26 @@
 import os
-import click
-
 from typing import Dict, Any
+
+import click
 
 from app.generate_yaml import write_to_yaml, generate_layer_data, write_to_cd_by_k_word
 from app.parser import parse_k_file
 from app.processor import filter_elements_by_subregion, group_nodes_by_coordinate, find_elements_for_layer, \
     find_h_and_home
 from app.settings import input_file_name, put_cell_sets, put_stress_set, put_set_solid
+from settings import BASE_DIR
 
 
 @click.command()
-@click.option("--input", default="data/input", help="Папка с исходными файлами")
+@click.option("--input-dir", default="data/input", help="Папка с исходными файлами")
 @click.option("--subregion", default=1, type=int, help="Подобласть для фильтрации")
 @click.option("--coordinate", default='Y', type=str, help="Координата для фильтрации слоев")
 @click.option("--density", default=-1500.0, type=float, help="Плотность материала (кг/м³)")
 @click.option("--pr", default=0.32, type=float, help="Коэффициент Пуассона PR")
 @click.option("--output", default="data/output", help="Папка для сохранения")
-def run(input: str, subregion: int, coordinate: str, density: float, pr: float, output: str) -> None:
-    k_file_path = os.path.join(input, input_file_name + ".k")  # Формируем путь к файлу
+def run(input_dir: str, subregion: int, coordinate: str, density: float, pr: float, output: str) -> None:
+    input_dir = os.path.join(BASE_DIR, input_dir)
+    k_file_path = os.path.join(input_dir, f"{input_file_name}.k")
 
     print("Чтение файла:", k_file_path)
     try:
@@ -83,14 +85,14 @@ def run(input: str, subregion: int, coordinate: str, density: float, pr: float, 
     try:
         data: Dict[str, Any] = generate_layer_data(len(layer_elements), coordinate, density, pr, h, layer_elements)
 
-        write_to_yaml(data, input, output)
+        write_to_yaml(data, input_dir, output)
         print(f"Файл сохранен в {output}")
     except Exception as e:
         print(f"Не удалось создать файл\nОшибка{e}")
 
     print("Вставим в cd файл чтобы получить готовый вариант")
     try:
-        output = write_to_cd_by_k_word(data, "CELL_SETS", input, put_cell_sets)
+        output = write_to_cd_by_k_word(data, "CELL_SETS", input_dir, put_cell_sets)
         write_to_cd_by_k_word(data, "INITIAL_STRESS_SET", output, put_stress_set)
         write_to_cd_by_k_word(data, "SET_SOLID", output, put_set_solid)
 
