@@ -2,18 +2,9 @@ import os
 import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from typing import Dict, Any
 
-from app import (
-    generate_layer_data,
-    write_to_cd_by_k_word,
-    parse_k_file,
-    filter_elements_by_subregion,
-    find_elements_for_layer,
-    find_h_and_home, put_cell_sets,
-    put_stress_set,
-    put_set_solid
-)
+from core.config import ProcessingConfig
+from core.processing_service import ProcessingService
 from ui import FileInput, TextInput, DropdownInput, ProgressDisplay, OutputText, ActionButton
 from utils import ResultFormatter, InputValidator, Timer
 
@@ -21,6 +12,8 @@ from utils import ResultFormatter, InputValidator, Timer
 class Application(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
+
+        self.service = ProcessingService()
 
         self.title("ParserKFile")
         self.geometry("600x600")
@@ -48,14 +41,6 @@ class Application(tk.Tk):
             self.after(0, self.finish_processing_ui)
 
     def run_in_thread(self):
-        valid, error_msg = InputValidator.validate_file_paths(
-            self.input_k_file_path,
-            self.input_cd_file_path
-        )
-        if not valid:
-            messagebox.showerror("Ошибка", error_msg)
-            return
-
         self.progress_display.update_progress(0)
         self.progress_display.update_status("Подготовка...")
 
@@ -68,8 +53,10 @@ class Application(tk.Tk):
 
         self.process_button.config(state="disabled")
 
-        thread = threading.Thread(target=self.run_process_data_with_cleanup)
-        thread.start()
+        threading.Thread(
+            target=self.run_process_data_with_cleanup,
+            daemon=True
+        ).start()
 
     def create_widgets(self) -> None:
         """Создание элементов интерфейса"""
@@ -142,89 +129,50 @@ class Application(tk.Tk):
             self.cd_file_input.update_label(os.path.basename(self.input_cd_file_path))
 
     def process_data(self) -> None:
-        """Обрабатывает данные при нажатии кнопки"""
-        valid, error_msg = InputValidator.validate_file_paths(
-            self.input_k_file_path,
-            self.input_cd_file_path
-        )
-        if not valid:
-            messagebox.showerror("Ошибка", error_msg)
-            return
-
-        valid, numbers, error_msg = InputValidator.validate_numbers(
-            self.subregion_input.get(),
-            self.density_input.get(),
-            self.pr_input.get()
-        )
-        if not valid:
-            messagebox.showerror("Ошибка", error_msg)
-            return
-
-        subregion, density, PR = numbers
-        coordinate = self.coordinate_input.get()
-
         try:
-            # === ЭТАП 1: Парсинг K-файла ===
-            self.after(0, self.update_progress, 10, "Парсинг K-файла...")
-            nodes, elements = parse_k_file(self.input_k_file_path)
-        except Exception as e:
-            messagebox.showerror("Ошибка", f"Произошла ошибка при сборе данных по k файлу: {e}")
-            return
+            valid, numbers, error_msg = InputValidator.validate_numbers(
+                self.subregion_input.get(),
+                self.density_input.get(),
+                self.pr_input.get()
+            )
+            if not valid:
+                raise ValueError(error_msg)
 
-        try:
-            # === ЭТАП 2: Фильтрация элементов ===
-            self.after(0, self.update_progress, 25, "Фильтрация элементов по подобласти...")
-            filtered_elements = filter_elements_by_subregion(elements, subregion)
+            subregion, density, pr = numbers
 
-            # === ЭТАП 3: Поиск домика и высоты ===
-            self.after(0, self.update_progress, 40, "Анализ геометрии модели...")
-            h, nodes, nodes_outside = find_h_and_home(nodes, coordinate)
-
-            # === ЭТАП 4: Формирование слоёв ===
-            self.after(0, self.update_progress, 60, "Формирование слоёв расчетной сетки...")
-            layer_elements = find_elements_for_layer(nodes, filtered_elements, coordinate)
-
-            element_counts = [len(elements) for elements in layer_elements.values() if elements]
-
-            if len(set(element_counts)) > 1:
-                messagebox.showerror("Предупреждение", "Количество элементов в слоях не совпадает!")
-
-            # === ЭТАП 5: Генерация напряжений ===
-            self.after(0, self.update_progress, 75, "Формирование начальных напряжений...")
-            data: Dict[str, Any] = generate_layer_data(len(layer_elements), coordinate, density, PR, h, layer_elements)
-        except Exception as e:
-            messagebox.showerror("Ошибка", f"Произошла ошибка при обработке результатов: {e}")
-            return
-
-        try:
-            # === ЭТАП 6: Запись файлов ===
-            self.after(0, self.update_progress, 90, "Запись CD-файла...")
-            output = write_to_cd_by_k_word(data, "CELL_SETS", self.input_cd_file_path, put_cell_sets)
-            write_to_cd_by_k_word(data, "INITIAL_STRESS_SET", output, put_stress_set)
-            output_path: str = write_to_cd_by_k_word(data, "SET_SOLID", output, put_set_solid)
-
-            self.after(0, self.update_progress, 100, "Готово ✔")
-
-            formatted_results = ResultFormatter.format_results(
-                output_path=output_path,
-                elements_count=len(elements),
-                height=h,
+            config = ProcessingConfig(
+                k_file=self.input_k_file_path,
+                cd_file=self.input_cd_file_path,
                 subregion=subregion,
                 density=density,
-                pr=PR,
-                has_home=len(nodes_outside) != 0,
-                coordinate=coordinate,
-                elapsed_time=self.timer.get_elapsed_formatted(),
-                cell_sets_marker=put_cell_sets,
-                stress_set_marker=put_stress_set,
-                solid_set_marker=put_set_solid
+                pr=pr,
+                coordinate=self.coordinate_input.get()
+            )
+
+            result = self.service.process(
+                config,
+                on_progress=lambda v, s: self.after(
+                    0, self.update_progress, v, s
+                )
+            )
+
+            formatted = ResultFormatter.format_results(
+                output_path=result["output_path"],
+                elements_count=result["elements_count"],
+                height=result["height"],
+                subregion=subregion,
+                density=density,
+                pr=pr,
+                has_home=result["has_home"],
+                coordinate=config.coordinate,
+                elapsed_time=self.timer.get_elapsed_formatted()
             )
 
             self.output_text.clear()
-            self.output_text.insert(formatted_results)
+            self.output_text.insert(formatted)
 
         except Exception as e:
-            messagebox.showerror("Ошибка", f"Произошла ошибка при записи данных в cd файл: {e}")
+            messagebox.showerror("Ошибка", str(e))
 
 
 if __name__ == "__main__":
