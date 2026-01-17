@@ -3,8 +3,7 @@ import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
-from core.config import ProcessingConfig
-from core.processing_service import ProcessingService
+from core import ProcessingConfig, ProcessingService
 from ui import FileInput, TextInput, DropdownInput, ProgressDisplay, OutputText, ActionButton
 from utils import ResultFormatter, InputValidator, Timer
 
