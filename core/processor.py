@@ -86,7 +86,8 @@ def find_elements_for_layer(
 ) -> Dict[float, List[int]]:
     
     coord_idx = {'x': 0, 'y': 1, 'z': 2}[coordinate.lower()]
-    tolerance: float = 1e-10
+
+    tolerance: float = 1e-2
     
     node_to_layer: Dict[int, float] = {}
     layer_nodes: Dict[float, List[int]] = {}
