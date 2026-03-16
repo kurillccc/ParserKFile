@@ -1,2 +1,6 @@
 .idea/misc.xml
 /.idea
+/core/__pycache__
+/utils/__pycache__
+/core/__pycache__
+/ui/__pycache__
