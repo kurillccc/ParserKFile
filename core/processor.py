@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Set
 
 
 def filter_elements_by_subregion(elements: Dict[int, Dict[str, List[int]]], target_subregion: int) -> Dict[
@@ -80,48 +80,49 @@ def find_h_and_home(
 
 
 def find_elements_for_layer(
-        nodes: Dict[int, Tuple[float, float, float]],
-        elements: Dict[int, List[int]],
-        coordinate: str
+    nodes: Dict[int, Tuple[float, float, float]],
+    elements: Dict[int, List[int]],
+    coordinate: str
 ) -> Dict[float, List[int]]:
-
-    grouped_nodes = group_nodes_by_coordinate(nodes, coordinate)
-
-    layer_elements: Dict[float, List[int]] = {}
-    processed_elements = set()
-
-    tolerance: float = 1e-10
-    rounded_layers: Dict[float, List[int]] = {}
-
-    # --- группируем слои ---
-    for coord_value, node_ids in grouped_nodes.items():
+    coord_idx = {'x': 0, 'y': 1, 'z': 2}[coordinate.lower()]
+    tolerance: float = 1e-2
+    
+    node_to_layer: Dict[int, float] = {}
+    layer_nodes: Dict[float, List[int]] = {}
+    
+    sorted_nodes = sorted(nodes.items(), key=lambda item: item[1][coord_idx])
+    
+    for node_id, (x, y, z) in sorted_nodes:
+        coord_value = (x, y, z)[coord_idx]
         rounded_coord = round(coord_value / tolerance) * tolerance
-        rounded_layers.setdefault(rounded_coord, []).extend(node_ids)
+        node_to_layer[node_id] = rounded_coord
+        
+        if rounded_coord not in layer_nodes:
+            layer_nodes[rounded_coord] = []
+        layer_nodes[rounded_coord].append(node_id)
 
-    elements_items = list(elements.items())  # локальная ссылка
-
-    # --- основной цикл ---
-    for rounded_coord, node_ids in rounded_layers.items():
-        node_ids_set = set(node_ids)  # КЛЮЧЕВОЕ УСКОРЕНИЕ
-        elements_in_layer = []
-
-        for element_id, element_nodes in elements_items:
-            if element_id in processed_elements:
-                continue
-
-            # fast check
-            for nid in element_nodes:
-                if nid in node_ids_set:
-                    elements_in_layer.append(element_id)
-                    processed_elements.add(element_id)
-                    break
-
-        layer_elements[rounded_coord] = elements_in_layer
-
-    # удаляем последний пустой слой
+    element_layers: Dict[int, Set[float]] = {}
+    
+    for elem_id, elem_nodes in elements.items():
+        layers = set()
+        for node_id in elem_nodes:
+            if node_id in node_to_layer:
+                layers.add(node_to_layer[node_id])
+        if layers:
+            element_layers[elem_id] = layers
+    
+    layer_elements: Dict[float, List[int]] = {}
+    for layer in layer_nodes.keys():
+        layer_elements[layer] = []
+    
+    for elem_id, layers in element_layers.items():
+        for layer in layers:
+            if layer in layer_elements:
+                layer_elements[layer].append(elem_id)
+    
     if layer_elements:
-        last_key = next(reversed(layer_elements))
-        if not layer_elements[last_key]:
-            del layer_elements[last_key]
-
-    return dict(sorted(layer_elements.items(), key=lambda x: round(x[0], 6)))
+        last_layer = next(reversed(list(layer_elements.keys())))
+        if not layer_elements[last_layer]:
+            del layer_elements[last_layer]
+    
+    return layer_elements
