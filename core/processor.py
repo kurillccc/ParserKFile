@@ -10,7 +10,7 @@ def filter_elements_by_subregion(elements: Dict[int, Dict[str, List[int]]], targ
         if data["subregion"] == target_subregion
     }
 
-
+ 
 def group_nodes_by_coordinate(
         nodes: Dict[int, Tuple[float, float, float]],
         coordinate: str
@@ -86,21 +86,32 @@ def find_elements_for_layer(
 ) -> Dict[float, List[int]]:
     
     coord_idx = {'x': 0, 'y': 1, 'z': 2}[coordinate.lower()]
-    tolerance: float = 1e-10
+    tolerance: float = 0.76
     
     node_to_layer: Dict[int, float] = {}
     layer_nodes: Dict[float, List[int]] = {}
     
     sorted_nodes = sorted(nodes.items(), key=lambda item: item[1][coord_idx])
     
-    for node_id, (x, y, z) in sorted_nodes:
-        coord_value = (x, y, z)[coord_idx]
-        rounded_coord = round(coord_value / tolerance) * tolerance
-        node_to_layer[node_id] = rounded_coord
+    for node_id, coords in sorted_nodes:
+        coord_value = coords[coord_idx]
         
-        if rounded_coord not in layer_nodes:
-            layer_nodes[rounded_coord] = []
-        layer_nodes[rounded_coord].append(node_id)
+        found_layer = None
+        min_diff = float('inf')
+        
+        for layer_coord in layer_nodes.keys():
+            diff = abs(coord_value - layer_coord)
+            if diff <= tolerance:
+                if diff < min_diff:
+                    found_layer = layer_coord
+                    min_diff = diff
+        
+        if found_layer is not None:
+            node_to_layer[node_id] = found_layer
+            layer_nodes[found_layer].append(node_id)
+        else:
+            node_to_layer[node_id] = coord_value
+            layer_nodes[coord_value] = [node_id]
     
     element_layers: Dict[int, Set[float]] = {}
     
@@ -113,7 +124,7 @@ def find_elements_for_layer(
             element_layers[elem_id] = layers
     
     layer_elements: Dict[float, List[int]] = {}
-    for layer in layer_nodes.keys():
+    for layer in sorted(layer_nodes.keys()):
         layer_elements[layer] = []
     
     for elem_id, layers in element_layers.items():
@@ -121,9 +132,12 @@ def find_elements_for_layer(
             if layer in layer_elements:
                 layer_elements[layer].append(elem_id)
     
-    if layer_elements:
-        last_layer = next(reversed(list(layer_elements.keys())))
-        if not layer_elements[last_layer]:
-            del layer_elements[last_layer]
+    layer_elements = {layer: elements_list 
+                     for layer, elements_list in layer_elements.items() 
+                     if elements_list}
+    
+    print(f"Tolerance: {tolerance}")
+    for i, layer in enumerate(sorted(layer_elements.keys())):
+        print(f"{i}: {layer:.6f}")
     
     return layer_elements
