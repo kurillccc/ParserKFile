@@ -1,3 +1,5 @@
+import yaml
+import os
 from typing import Dict, Tuple, List
 
 
@@ -51,3 +53,31 @@ def parse_k_file(file_path: str) -> Tuple[
         print("*ELEMENT_SOLID не найден")
 
     return nodes, elements
+
+
+def parse_yaml_file(file_path: str) -> Tuple[str, str]:
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            data = yaml.safe_load(file)
+
+        if not isinstance(data, dict):
+            raise ValueError("YAML файл должен содержать объект (key-value)")
+
+        try:
+            mesh_name = data["MESH"]
+            cd_name = data["COMMON_DATA"]
+        except KeyError as e:
+            raise ValueError(f"В YAML отсутствует обязательный ключ: {e.args[0]}") from e
+
+        base_dir = os.path.dirname(file_path)
+
+        mesh_path = os.path.join(base_dir, mesh_name)
+        cd_path = os.path.join(base_dir, cd_name)
+
+        return mesh_path, cd_path
+
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"Файл не найден: {file_path}") from e
+
+    except yaml.YAMLError as e:
+        raise ValueError(f"Ошибка парсинга YAML в файле {file_path}") from e

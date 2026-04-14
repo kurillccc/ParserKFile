@@ -6,12 +6,10 @@ class InputValidator:
     """Валидация входных данных"""
 
     @staticmethod
-    def validate_file_paths(k_path: str, cd_path: str) -> Tuple[bool, str]:
+    def validate_file_paths(yaml_path: str) -> Tuple[bool, str]:
         """Проверка путей к файлам"""
-        if not k_path:
-            return False, "Выберите k файл для обработки"
-        if not cd_path:
-            return False, "Выберите cd файл для обработки"
+        if not yaml_path:
+            return False, "Выберите yaml файл для обработки"
         return True, ""
 
     @staticmethod
