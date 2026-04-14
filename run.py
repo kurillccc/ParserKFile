@@ -15,13 +15,12 @@ class Application(tk.Tk):
         self.service = ProcessingService()
 
         self.title("ParserKFile")
-        self.geometry("600x700")
+        self.geometry("600x600")
 
         self.timer = Timer()
         self.timer_running = False
 
-        self.input_k_file_path: str = ""
-        self.input_cd_file_path: str = ""
+        self.input_yaml_file_path: str = ""
         self.output_folder: str = "ParserKFile/app/data/output"
 
         self.resizable(False, False)
@@ -60,47 +59,39 @@ class Application(tk.Tk):
     def create_widgets(self) -> None:
         """Создание элементов интерфейса"""
 
-        self.k_file_input = FileInput(
+        self.yaml_file_input = FileInput(
             self,
-            "Выбрать k файл",
-            "Выберите файл k для обработки",
-            self.select_input_k_file
+            "Выбрать YAML файл",
+            "Выберите YAML файл для обработки",
+            self.select_input_yaml_file
         )
-        self.k_file_input.grid(row=0, column=0, columnspan=2, sticky="we")
-
-        self.cd_file_input = FileInput(
-            self,
-            "Выбрать cd файл",
-            "Выберите файл cd для обработки",
-            self.select_input_cd_file
-        )
-        self.cd_file_input.grid(row=1, column=0, columnspan=2, sticky="we")
+        self.yaml_file_input.grid(row=0, column=0, columnspan=2, sticky="we")
 
         self.subregion_input = TextInput(self, "Введите номер подобласти:")
-        self.subregion_input.grid(row=2, column=0, columnspan=2, sticky="we")
+        self.subregion_input.grid(row=1, column=0, columnspan=2, sticky="we")
 
         self.density_input = TextInput(self, "Введите плотность:")
-        self.density_input.grid(row=3, column=0, columnspan=2, sticky="we")
+        self.density_input.grid(row=2, column=0, columnspan=2, sticky="we")
 
         self.pr_input = TextInput(self, "Введите коэффициент Пуассона PR:")
-        self.pr_input.grid(row=4, column=0, columnspan=2, sticky="we")
+        self.pr_input.grid(row=3, column=0, columnspan=2, sticky="we")
 
         self.coordinate_input = DropdownInput(self, "Выберите координату (X, Y, Z):", ["X", "Y", "Z"])
-        self.coordinate_input.grid(row=5, column=0, columnspan=2, sticky="we")
+        self.coordinate_input.grid(row=4, column=0, columnspan=2, sticky="we")
 
         self.heterogeneous_checkbox = CheckboxInput(self, text="Неоднородный слой", default=False)
-        self.heterogeneous_checkbox.grid(row=6, column=0, columnspan=2, sticky="we")
+        self.heterogeneous_checkbox.grid(row=5, column=0, columnspan=2, sticky="we")
 
         self.process_button = ActionButton(self, "Обработать", self.run_in_thread)
-        self.process_button.grid(row=7, column=0, columnspan=2, pady=0)
+        self.process_button.grid(row=6, column=0, columnspan=2, pady=0)
 
         self.progress_display = ProgressDisplay(self)
-        self.progress_display.grid(row=8, column=0, columnspan=2, pady=0)
+        self.progress_display.grid(row=7, column=0, columnspan=2, pady=0)
 
         self.output_text = OutputText(self)
-        self.output_text.grid(row=9, column=0, columnspan=2, pady=5, sticky="nsew")
+        self.output_text.grid(row=8, column=0, columnspan=2, pady=5, sticky="nsew")
 
-        self.grid_rowconfigure(9, weight=1)
+        self.grid_rowconfigure(8, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
@@ -117,18 +108,11 @@ class Application(tk.Tk):
 
         self.after(10, self.update_timer)
 
-    def select_input_k_file(self) -> None:
+    def select_input_yaml_file(self) -> None:
         """Открывает диалог для выбора файла"""
-        self.input_k_file_path = filedialog.askopenfilename(title="Выберите k файл", filetypes=[("Text files", "*.k")])
-        if self.input_k_file_path:
-            self.k_file_input.update_label(os.path.basename(self.input_k_file_path))
-
-    def select_input_cd_file(self) -> None:
-        """Открывает диалог для выбора файла"""
-        self.input_cd_file_path = filedialog.askopenfilename(title="Выберите cd файл",
-                                                             filetypes=[("Text files", "*.cd")])
-        if self.input_cd_file_path:
-            self.cd_file_input.update_label(os.path.basename(self.input_cd_file_path))
+        self.input_yaml_file_path = filedialog.askopenfilename(title="Выберите YAML файл", filetypes=[("YAML files", "*.yaml")])
+        if self.input_yaml_file_path:
+            self.yaml_file_input.update_label(os.path.basename(self.input_yaml_file_path))
 
     def process_data(self) -> None:
         try:
@@ -143,8 +127,7 @@ class Application(tk.Tk):
             subregion, density, pr = numbers
 
             config = ProcessingConfig(
-                k_file=self.input_k_file_path,
-                cd_file=self.input_cd_file_path,
+                yaml_file=self.input_yaml_file_path,
                 subregion=subregion,
                 density=density,
                 pr=pr,

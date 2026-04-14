@@ -83,7 +83,8 @@ def find_elements_for_layer(
     nodes: Dict[int, Tuple[float, float, float]],
     elements: Dict[int, List[int]],
     coordinate: str,
-    heterogeneous_layer: bool
+    heterogeneous_layer: bool,
+    on_progress=None
 ) -> Dict[float, List[int]]:
     
     coord_idx = {'x': 0, 'y': 1, 'z': 2}[coordinate.lower()]
@@ -91,8 +92,14 @@ def find_elements_for_layer(
     
     node_to_layer: Dict[int, float] = {}
     layer_nodes: Dict[float, List[int]] = {}
+
+    if on_progress:
+        on_progress(53, "Формирование слоёв...")
     
     sorted_nodes = sorted(nodes.items(), key=lambda item: item[1][coord_idx])
+
+    if on_progress:
+        on_progress(56, "Формирование слоёв...")
     
     for node_id, coords in sorted_nodes:
         coord_value = coords[coord_idx]
@@ -114,13 +121,25 @@ def find_elements_for_layer(
             rounded_coord = round(coord_value / tolerance) * tolerance
             node_to_layer[node_id] = rounded_coord
             layer_nodes[rounded_coord] = [node_id]
+
+    if on_progress:
+        on_progress(60, f"Формирование слоёв...")
     
     layer_elements: Dict[float, List[int]] = {}
     processed_elements = set()
     
     elements_items = list(elements.items())
+    total_layers = len(layer_nodes)
+
+    if on_progress:
+        on_progress(64, "Формирование слоёв...")
     
-    for layer_coord, node_ids in layer_nodes.items():
+    for idx, (layer_coord, node_ids) in enumerate(layer_nodes.items()):
+        if on_progress and total_layers > 0:
+            progress = 68 + int((idx / total_layers) * 5)  # 68-73%
+            if idx % max(1, total_layers // 10) == 0:  # каждые 10% слоёв
+                on_progress(progress, f"Обработка слоя {idx+1}/{total_layers}")
+        
         node_ids_set = set(node_ids)
         elements_in_layer = []
         
@@ -137,6 +156,9 @@ def find_elements_for_layer(
         if elements_in_layer:  # Только непустые слои
             layer_elements[layer_coord] = elements_in_layer
     
+    if on_progress:
+        on_progress(73, f"Сортировка {len(layer_elements)} слоёв...")
+
     sorted_layers = dict(sorted(layer_elements.items(), key=lambda x: x[0]))
     
     print(f"Tolerance: {tolerance}")
