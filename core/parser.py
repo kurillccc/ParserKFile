@@ -3,7 +3,7 @@ import os
 from typing import Dict, Tuple, List
 
 
-def parse_k_file(file_path: str) -> Tuple[
+def parse_k_file(file_path: str, on_progress=None) -> Tuple[
     Dict[int, Tuple[float, float, float]],
     Dict[int, Dict[str, List[int]]]
 ]:
@@ -13,8 +13,22 @@ def parse_k_file(file_path: str) -> Tuple[
     parsing_nodes = False
     parsing_elements = False
 
+    # Подсчёт строк для прогресса
+    total_lines = 0
+    if on_progress:
+        with open(file_path, "rb") as f:
+            total_lines = sum(1 for _ in f)
+
+    current_line = 0
     with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
         for line in file:
+            current_line += 1
+            if on_progress and total_lines > 0:
+                progress = 10 + int((current_line / total_lines) * 25)  # 10-35%
+                if current_line % max(1, total_lines // 20) == 0:  # каждые 5%
+                    on_progress(progress, "Парсинг K-файла...")
+
+            
             line = line.rstrip()
             if not line:
                 continue
