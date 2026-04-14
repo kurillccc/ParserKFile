@@ -9,3 +9,4 @@ class ProcessingConfig:
     density: float
     pr: float
     coordinate: str
+    heterogeneous_layer: bool

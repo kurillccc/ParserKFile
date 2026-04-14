@@ -38,7 +38,7 @@ class ProcessingService:
 
         # 5. Слои
         on_progress(60, "Формирование слоёв...")
-        layers = find_elements_for_layer(nodes, filtered, config.coordinate)
+        layers = find_elements_for_layer(nodes, filtered, config.coordinate, config.heterogeneous_layer)
 
         # 6. Напряжения
         on_progress(75, "Формирование напряжений...")
