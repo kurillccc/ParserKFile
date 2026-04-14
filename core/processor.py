@@ -1,4 +1,5 @@
-from typing import Dict, Tuple, List, Set
+from typing import Dict, Tuple, List
+from collections import Counter
 
 
 def filter_elements_by_subregion(elements: Dict[int, Dict[str, List[int]]], target_subregion: int) -> Dict[
@@ -78,15 +79,15 @@ def find_h_and_home(
     return h, filtered_nodes, nodes_outside
 
 
-
 def find_elements_for_layer(
     nodes: Dict[int, Tuple[float, float, float]],
     elements: Dict[int, List[int]],
-    coordinate: str
+    coordinate: str,
+    heterogeneous_layer: bool
 ) -> Dict[float, List[int]]:
     
     coord_idx = {'x': 0, 'y': 1, 'z': 2}[coordinate.lower()]
-    tolerance: float = 0.76
+    tolerance: float = 0.7625 if heterogeneous_layer else 1e-9
     
     node_to_layer: Dict[int, float] = {}
     layer_nodes: Dict[float, List[int]] = {}
@@ -110,34 +111,36 @@ def find_elements_for_layer(
             node_to_layer[node_id] = found_layer
             layer_nodes[found_layer].append(node_id)
         else:
-            node_to_layer[node_id] = coord_value
-            layer_nodes[coord_value] = [node_id]
-    
-    element_layers: Dict[int, Set[float]] = {}
-    
-    for elem_id, elem_nodes in elements.items():
-        layers = set()
-        for node_id in elem_nodes:
-            if node_id in node_to_layer:
-                layers.add(node_to_layer[node_id])
-        if layers:
-            element_layers[elem_id] = layers
+            rounded_coord = round(coord_value / tolerance) * tolerance
+            node_to_layer[node_id] = rounded_coord
+            layer_nodes[rounded_coord] = [node_id]
     
     layer_elements: Dict[float, List[int]] = {}
-    for layer in sorted(layer_nodes.keys()):
-        layer_elements[layer] = []
+    processed_elements = set()
     
-    for elem_id, layers in element_layers.items():
-        for layer in layers:
-            if layer in layer_elements:
-                layer_elements[layer].append(elem_id)
+    elements_items = list(elements.items())
     
-    layer_elements = {layer: elements_list 
-                     for layer, elements_list in layer_elements.items() 
-                     if elements_list}
+    for layer_coord, node_ids in layer_nodes.items():
+        node_ids_set = set(node_ids)
+        elements_in_layer = []
+        
+        for element_id, element_nodes in elements_items:
+            if element_id in processed_elements:
+                continue
+            
+            for nid in element_nodes:
+                if nid in node_ids_set:
+                    elements_in_layer.append(element_id)
+                    processed_elements.add(element_id)
+                    break
+        
+        if elements_in_layer:  # Только непустые слои
+            layer_elements[layer_coord] = elements_in_layer
+    
+    sorted_layers = dict(sorted(layer_elements.items(), key=lambda x: x[0]))
     
     print(f"Tolerance: {tolerance}")
-    for i, layer in enumerate(sorted(layer_elements.keys())):
+    for i, layer in enumerate(sorted(sorted_layers.keys())):
         print(f"{i}: {layer:.6f}")
     
-    return layer_elements
+    return sorted_layers

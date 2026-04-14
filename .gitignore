@@ -6,3 +6,9 @@
 /ui/__pycache__
 .DS_Store
 /data/output
+core/__pycache__/config.cpython-312.pyc
+core/__pycache__/processing_service.cpython-312.pyc
+/core/__pycache__
+/core/__pycache__
+/ui/__pycache__
+/ui/__pycache__

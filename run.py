@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 from core import ProcessingConfig, ProcessingService
-from ui import FileInput, TextInput, DropdownInput, ProgressDisplay, OutputText, ActionButton
+from ui import FileInput, TextInput, DropdownInput, ProgressDisplay, OutputText, ActionButton, CheckboxInput
 from utils import ResultFormatter, InputValidator, Timer
 
 
@@ -15,7 +15,7 @@ class Application(tk.Tk):
         self.service = ProcessingService()
 
         self.title("ParserKFile")
-        self.geometry("600x600")
+        self.geometry("600x700")
 
         self.timer = Timer()
         self.timer_running = False
@@ -88,16 +88,19 @@ class Application(tk.Tk):
         self.coordinate_input = DropdownInput(self, "Выберите координату (X, Y, Z):", ["X", "Y", "Z"])
         self.coordinate_input.grid(row=5, column=0, columnspan=2, sticky="we")
 
+        self.heterogeneous_checkbox = CheckboxInput(self, text="Неоднородный слой", default=False)
+        self.heterogeneous_checkbox.grid(row=6, column=0, columnspan=2, sticky="we")
+
         self.process_button = ActionButton(self, "Обработать", self.run_in_thread)
-        self.process_button.grid(row=6, column=0, columnspan=2, pady=7)
+        self.process_button.grid(row=7, column=0, columnspan=2, pady=0)
 
         self.progress_display = ProgressDisplay(self)
-        self.progress_display.grid(row=7, column=0, columnspan=2, pady=0)
+        self.progress_display.grid(row=8, column=0, columnspan=2, pady=0)
 
         self.output_text = OutputText(self)
-        self.output_text.grid(row=8, column=0, columnspan=2, pady=5, sticky="nsew")
+        self.output_text.grid(row=9, column=0, columnspan=2, pady=5, sticky="nsew")
 
-        self.grid_rowconfigure(8, weight=1)
+        self.grid_rowconfigure(9, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
@@ -145,7 +148,8 @@ class Application(tk.Tk):
                 subregion=subregion,
                 density=density,
                 pr=pr,
-                coordinate=self.coordinate_input.get()
+                coordinate=self.coordinate_input.get(),
+                heterogeneous_layer=self.heterogeneous_checkbox.get()
             )
 
             result = self.service.process(

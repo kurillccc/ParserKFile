@@ -4,7 +4,8 @@ from .components import (
     DropdownInput,
     ProgressDisplay,
     OutputText,
-    ActionButton
+    ActionButton,
+    CheckboxInput
 )
 
 __all__ = [
@@ -13,5 +14,6 @@ __all__ = [
     'DropdownInput',
     'ProgressDisplay',
     'OutputText',
-    'ActionButton'
+    'ActionButton',
+    'CheckboxInput'
 ]

@@ -75,13 +75,45 @@ class DropdownInput:
         return self.frame
 
 
+class CheckboxInput:
+    """Компонент для чекбокса с текстом"""
+    
+    def __init__(self, parent, text, default):
+        self.frame = tk.Frame(parent)
+        self.is_checked = tk.BooleanVar(value=default)
+        
+        self.inner_frame = tk.Frame(self.frame)
+        self.inner_frame.pack(fill="x", padx=10, pady=5)
+        
+        self.label = tk.Label(self.inner_frame, text=text, anchor="w")
+        self.label.pack(side="left", fill="x", expand=True)
+        
+        self.checkbox = tk.Checkbutton(
+            self.inner_frame, 
+            variable=self.is_checked,
+            anchor="e"
+        )
+        self.checkbox.pack(side="right")
+    
+    def grid(self, **kwargs):
+        self.frame.grid(**kwargs)
+    
+    def get(self):
+        return self.is_checked.get()
+    
+    def set(self, value):
+        self.is_checked.set(value)
+    
+    def get_widget(self):
+        return self.frame
+
+
 class ProgressDisplay:
     """Компонент для отображения прогресса"""
 
     def __init__(self, parent):
         self.frame = tk.Frame(parent)
 
-        # Прогресс-бар
         self.progress = ttk.Progressbar(
             self.frame,
             orient="horizontal",
@@ -91,15 +123,12 @@ class ProgressDisplay:
         )
         self.progress.grid(row=0, column=0, columnspan=2, pady=10)
 
-        # Контейнер для статуса и времени
         self.status_frame = tk.Frame(self.frame)
         self.status_frame.grid(row=1, column=0, columnspan=2, sticky="we", padx=10)
 
-        # Статус выполнения
         self.status_label = tk.Label(self.status_frame, text="⌛Ожидание запуска", anchor="w")
         self.status_label.pack(side="left", fill="x", expand=True)
 
-        # Время
         self.time_label = tk.Label(self.status_frame, text="", anchor="e")
         self.time_label.pack(side="right")
 
