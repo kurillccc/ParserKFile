@@ -13,11 +13,9 @@ def parse_k_file(file_path: str, on_progress=None) -> Tuple[
     parsing_nodes = False
     parsing_elements = False
 
-    # Проверка существования файла
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"K-файл не найден: {file_path}")
     
-    # Проверка размера файла
     if os.path.getsize(file_path) == 0:
         raise ValueError(f"K-файл пуст: {file_path}")
 

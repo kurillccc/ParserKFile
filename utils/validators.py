@@ -21,7 +21,7 @@ class InputValidator:
         """Проверка числовых параметров"""
         try:
             subregion_val = int(subregion)
-            density_val = -float(density)  # Отрицательное значение
+            density_val = -float(density)
             pr_val = float(pr)
             return True, (subregion_val, density_val, pr_val), ""
         except ValueError as e:
