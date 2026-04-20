@@ -47,11 +47,13 @@ class ProcessingService:
         on_progress(75, "Формирование напряжений...")
         data: Dict[str, Any] = generate_layer_data(
             len(layers),
+            config.heterogeneous_layer,
             config.coordinate,
             config.density,
             config.pr,
             h,
-            layers
+            layers,
+            nodes
         )
 
         # 8. Запись
