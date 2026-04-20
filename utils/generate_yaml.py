@@ -25,11 +25,13 @@ def generate_unique_id() -> str:
 
 def generate_layer_data(
         num_layers: int,
+        heterogeneous_layer: bool,
         coordinate: str,
         density: float,
         PR: float,
         h: float,
-        layer_elements: Dict[float, List[int]]
+        layer_elements: Dict[float, List[int]],
+        nodes: Dict[int, Tuple[float, float, float]]
 ) -> Dict[str, Any]:
     
     cell_sets = []
@@ -55,7 +57,20 @@ def generate_layer_data(
                 unic_id = uuid.uuid4().hex
                 new_unic_id = uuid.uuid4().hex
 
-                h_for_layer = h_div * (layers_count - i) + h_div * 0.5
+                if heterogeneous_layer:
+                    node_coords = []
+
+                    for node_id in elements_in_layer:
+                        if node_id in nodes:
+                            node_coords.append(nodes[node_id][stress_idx])
+
+                    if not node_coords:
+                        raise ValueError(f"Нет координат для слоя {i}")
+
+                    h_for_layer = (min(node_coords) + max(node_coords)) / 2
+                
+                else:
+                    h_for_layer = h_div * (layers_count - i) + h_div * 0.5
 
                 sig_main = density * g * h_for_layer
                 sig = sig_main * PR / (1 - PR)
