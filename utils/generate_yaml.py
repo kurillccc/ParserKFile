@@ -42,6 +42,7 @@ def generate_layer_data(
         g = 9.8
         h_div = h / num_layers
         layers_count = len(layer_elements)
+        prev_cord = 0.0
 
         if coordinate == 'X':
             stress_idx = 0
@@ -58,19 +59,13 @@ def generate_layer_data(
                 new_unic_id = uuid.uuid4().hex
 
                 if heterogeneous_layer:
-                    node_coords = []
-
-                    for node_id in elements_in_layer:
-                        if node_id in nodes:
-                            node_coords.append(nodes[node_id][stress_idx])
-
-                    if not node_coords:
-                        raise ValueError(f"Нет координат для слоя {i}")
-
-                    h_for_layer = (min(node_coords) + max(node_coords)) / 2
+                    h_for_layer = h - ((coord_value - prev_cord) / 2 + prev_cord)
+                    
+                    prev_cord = coord_value
                 
                 else:
                     h_for_layer = h_div * (layers_count - i) + h_div * 0.5
+
 
                 sig_main = density * g * h_for_layer
                 sig = sig_main * PR / (1 - PR)
